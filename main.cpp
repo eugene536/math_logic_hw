@@ -59,6 +59,123 @@ bool goodCharForVar(char x) {
     return (x >= 'A' && x <= 'Z') || (x >= '0' && x <= '9');
 }
 
+bool vWithChildren(linkOnTree vertex) {
+    return vertex && vertex->left && vertex->right;
+}
+
+bool goodVertex(linkOnTree vertex) {
+    return vertex && vertex->str == "->";
+}
+
+bool vertexsArrow(string s1 = "->", string s2 = "->", string s3 = "->", string s4 = "->", string s5 = "->") {
+    return  s1 == "->" && s2 == "->" && s3 == "->" && s4 == "->" && s5 == "->";
+}
+
+bool isAxiom(linkOnTree vertex) {
+    if (!(vertex && vertex->left && vertex->right && vertex->str == "->"))
+        return false;
+    linkOnTree vright = vertex->right;
+    linkOnTree vleft = vertex->left;
+
+    //INV: exist ver with children && ver->str == "->"
+    //1 a->b->a
+    if (vWithChildren(vright) &&
+        vright->str == "->" && 
+        vleft->hash == vright->right->hash) 
+    {
+        return true;
+    }
+    
+    //2 (a -> b) -> (a -> b -> c) -> (a -> c)
+    if (vWithChildren(vright) &&
+        vWithChildren(vleft) &&
+        vWithChildren(vright->left) &&
+        vWithChildren(vright->right) &&
+        vWithChildren(vright->left->right) &&
+        vertexsArrow(vleft->str, vright->str, vright->left->str, vright->left->right->str, vright->right->str) &&
+
+        vleft->left->hash == vright->left->left->hash && // a
+        vleft->left->hash == vright->right->left->hash && //a
+        vleft->right->hash == vright->left->right->left->hash && //b
+        vright->right->right->hash == vright->left->right->right->hash) //c
+    {
+        return true;
+    }
+
+    //3 a -> b -> a & b
+    if (vWithChildren(vright) &&
+        vWithChildren(vright->right) &&
+        vright->right->str == "&" &&
+        vright->str == "->" &&
+        vleft->hash == vright->right->left->hash &&
+        vright->left->hash == vright->right->right->hash)
+    {
+        return true;
+    }
+
+    //4 a & b -> a
+    if (vleft->str == "&" &&
+        vWithChildren(vleft) && 
+        vleft->left->hash == vright->hash)
+    {
+        return true;
+    }
+
+    //5 b & a -> a
+    if (vleft->str == "&" &&
+        vWithChildren(vleft) && 
+        vleft->right->hash == vright->hash)
+    {
+        return true;
+    }
+
+    //6 a -> a | b
+     if (vright->str == "|" &&
+         vWithChildren(vright) && 
+         vleft->hash == vright->left->hash)
+    {
+        return true;
+    }    
+    
+    //7 a -> b | a
+     if (vright->str == "|" &&
+         vWithChildren(vright) && 
+         vleft->hash == vright->right->hash)
+    {
+        return true;
+    } 
+
+    //8 (a -> c) -> (b -> c) -> (a | b -> c)
+    if (vWithChildren(vleft) &&
+        vWithChildren(vright) &&
+        vWithChildren(vright->left) &&
+        vWithChildren(vright->right) &&
+        vWithChildren(vright->right->left) &&
+        vertexsArrow(vleft->str, vright->str, vright->left->str, vright->right->str) &&
+        vright->right->left->str == "|" &&
+
+        vleft->left->hash == vright->right->left->left->hash && //a
+        vleft->right->hash == vright->left->right->hash && //c
+        vleft->right->hash == vright->right->right->hash && //c
+        vright->left->left->hash == vright->right->left->right->hash) //b 
+    {
+        return true;
+    }
+
+    //9 (a -> b) -> (a -> !b) -> !a
+    if (vWithChildren(vleft) &&
+        vWithChildren(vright) &&
+        vWithChildren(vright->left) &&
+        vright->left->right->left &&
+        vright->right->left &&
+        vertexsArrow(vleft->str, vright->str, vright->left->str) &&
+
+        )
+
+
+    return false;
+}
+
 char nextToken() {
     do {
        it++; 
@@ -238,13 +355,18 @@ int main() {
         qPow[i] = qPow[i - 1] * q;
     }
 
+    int i = 0;
     while (getline(cin, s)) {
+        if (!s.length())
+            continue;
         forest.push_back(parse());
+        cout << isAxiom(forest[i++]);
     }
 
-    printTree(forest[0]);
-    printTree(forest[1]);
-    cout << endl << (forest[0]->hash == forest[1]->hash) << endl;
+
+    //printTree(forest[0]);
+    //printTree(forest[1]);
+    //cout << endl << (forest[0]->hash == forest[1]->hash) << endl;
     //getline(cin, s);
     //cout << "-----" << endl;
     //cout << s << endl;
