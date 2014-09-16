@@ -118,47 +118,34 @@ long long getHashStr(string s) {
 // not
 linkOnTree nigation() { 
     linkOnTree vertex = NULL;
-    switch (curLexem) {
-        case Not:
-        //if (curLexem == Not) {
-            vertex = new Tree();
-            vertex->str = "!";
+    if (curLexem == Not) {
+        vertex = new Tree();
+        vertex->str = "!";
+        nextLexem();
+        vertex->left = nigation();
+        int rsize = (vertex->right) ? vertex->right->size : 0; 
+        int lsize = (vertex->left) ? vertex->left->size : 0; 
+
+        int rhash = (vertex->right) ? vertex->right->hash : 0; 
+        int lhash = (vertex->left) ? vertex->left->hash : 0; 
+
+        vertex->size = lsize + rsize;
+        vertex->hash = lhash + qPow[lsize] * ('!' + rhash * q);
+    } else if(curLexem == Variable) {
+        vertex = new Tree();
+        vertex->str = var;
+        vertex->size = 1;
+        vertex->hash = getHashStr(var);
+    } else if( curLexem == OpenBracket) {
+        nextLexem();
+        vertex = expr();
+
+        if (curLexem != CloseBracket) {
+            throw runtime_error("expected ) on position" + to_string(it));    
+        } else {
             nextLexem();
-            vertex->left = nigation();
-            int rsize = (vertex->right) ? vertex->right->size : 0; 
-            int lsize = (vertex->left) ? vertex->left->size : 0; 
-
-            int rhash = (vertex->right) ? vertex->right->hash : 0; 
-            int lhash = (vertex->left) ? vertex->left->hash : 0; 
-
-            vertex->size = lsize + rsize;
-            vertex->hash = lhash + qPow[lsize] * ('!' + rhash * q);
-            break;
-            default:
-            break;
         }
-
-        //break;
-        //default:
-        //break;
-            
-        //case Variable:
-            //vertex = new Tree();
-            //vertex->str = var;
-            //vertex->size = 1;
-            //vertex->hash = getHashStr(var);
-        //break;
-
-        //case OpenBracket:
-            //nextLexem();
-            ////vertex = expr();
-            //if (curLexem != CloseBracket) {
-                //throw runtime_error("expected ) on position" + to_string(it));    
-            //} else {
-                //nextLexem();
-            //}
-        //break;
-    //}
+    }
     return vertex;
 }
 
