@@ -14,9 +14,10 @@ struct Tree {
     int size;
     Tree* left;
     Tree* right;
-    Tree() {
+    Tree(string s = "") {
         left = right = NULL;
         hash = size = 0;
+        str = s;
     }
 };
 typedef Tree* linkOnTree;
@@ -40,6 +41,7 @@ vector<linkOnTree> forest;
 int it; //iterator
 
 const int maxLen = 1e4;
+const char arrow = 19;
 long long q = 3;
 long long qPow[maxLen];
 
@@ -114,6 +116,9 @@ long long getHashStr(string s) {
     return temp;
 }
 
+linkOnTree expr();
+linkOnTree disjunction();
+linkOnTree conjunction();
 
 // not
 linkOnTree nigation() { 
@@ -129,7 +134,7 @@ linkOnTree nigation() {
         int rhash = (vertex->right) ? vertex->right->hash : 0; 
         int lhash = (vertex->left) ? vertex->left->hash : 0; 
 
-        vertex->size = lsize + rsize;
+        vertex->size = lsize + rsize + 1;
         vertex->hash = lhash + qPow[lsize] * ('!' + rhash * q);
     } else if(curLexem == Variable) {
         vertex = new Tree();
@@ -149,27 +154,85 @@ linkOnTree nigation() {
     return vertex;
 }
 
-//// &
-//linkOnTree conjunction() {
-    //linkOnTree con = nigation();
+// &
+linkOnTree conjunction() {
+    linkOnTree left = conjunction();
+    linkOnTree vertex = NULL;
+    if (curLexem == Or) {
+        vertex = new Tree("&");
+        vertex->left = left;
+        nextLexem();
+        vertex->right = disjunction();
 
-//}
+        int rsize = vertex->right->size;
+        int lsize = vertex->left->size;
 
-//// |
-//linkOnTree disjunction() {
-    //linkOnTree con = conjunction();
-//}
+        int rhash = vertex->right->hash; 
+        int lhash = vertex->left->hash; 
 
-//// ->, (expr)
-//linkOnTree expr() {
-   //linkOnTree dis = disjunction(); 
-//}
+        vertex->size = lsize + rsize + 1;
+        vertex->hash = lhash + qPow[lsize] * ('&' + rhash * q);
 
-//linkOnTree parse(string s) {
-    //it = -1; 
-    //nextLexem(); 
-    //return expr();
-//}
+    }
+    if (!vertex) 
+        return left;
+    return vertex;
+}
+
+// |
+linkOnTree disjunction() {
+    linkOnTree left = conjunction();
+    linkOnTree vertex = NULL;
+    if (curLexem == Or) {
+        vertex = new Tree("|");
+        vertex->left = left;
+        nextLexem();
+        vertex->right = disjunction();
+
+        int rsize = vertex->right->size;
+        int lsize = vertex->left->size;
+
+        int rhash = vertex->right->hash; 
+        int lhash = vertex->left->hash; 
+
+        vertex->size = lsize + rsize + 1;
+        vertex->hash = lhash + qPow[lsize] * ('|' + rhash * q);
+
+    }
+    if (!vertex) 
+        return left;
+    return vertex;
+}
+
+// ->, (expr)
+linkOnTree expr() {
+    linkOnTree left = disjunction(); 
+    linkOnTree vertex = NULL;
+    if (curLexem == Entailment) {
+        linkOnTree vertex = new Tree(string(1, arrow));
+        vertex->left = left;
+        nextLexem();
+        vertex->right = expr();
+
+        int rsize = vertex->right->size;
+        int lsize = vertex->left->size;
+
+        int rhash = vertex->right->hash; 
+        int lhash = vertex->left->hash; 
+
+        vertex->size = lsize + rsize + 1;
+        vertex->hash = lhash + qPow[lsize] * (arrow + rhash * q);
+    }
+    if (!vertex) 
+        return left;
+    return vertex;
+}
+
+linkOnTree parse() {
+    it = -1; 
+    nextLexem(); 
+    return expr();
+}
 
 int main() {
     #ifdef DEBUG
@@ -180,12 +243,11 @@ int main() {
     qPow[0] = 1;
     for (int i = 1; i < maxLen; i++) {
         qPow[i] = qPow[i - 1] * q;
-        cout << i << " " << qPow[i] << endl;
     }
 
-    //while (getline(cin, s)) {
-        //forest.push_back(parse(s));
-    //}
+    while (getline(cin, s)) {
+        forest.push_back(parse());
+    }
     //getline(cin, s);
     //cout << "-----" << endl;
     //cout << s << endl;
