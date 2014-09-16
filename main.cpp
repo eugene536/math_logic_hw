@@ -23,15 +23,7 @@ struct Tree {
 typedef Tree* linkOnTree;
 
 enum Lexems {
-    Begin,
-    OpenBracket,
-    CloseBracket,
-    And,
-    Or,
-    Not,
-    Entailment, // ->
-    Variable, // ('A'..'Z'){'0'..'9'}*
-    End
+    Begin, OpenBracket, CloseBracket, And, Or, Not, Entailment, Variable, End
 };
 Lexems curLexem = Begin;
 string var;
@@ -40,19 +32,16 @@ string s;
 vector<linkOnTree> forest;
 vector<linkOnTree> axioms;
 map<string, long long> axiomToHash;
-int it; //iterator
+int it; 
 
 const int maxLen = 1e4;
 long long q = 3;
 long long qPow[maxLen];
 
-void printTree(linkOnTree x, string s = "") {
-    if (x == NULL) 
-        return;
-    printTree(x->left, s + "l");
-    printTree(x->right, s + "r");
-    cout << s << " : "<< x->str << endl;
-}
+linkOnTree expr();
+linkOnTree disjunction();
+linkOnTree conjunction();
+bool f;
 
 bool good(int x) {
     return x >= 0 && x < (int) s.length();
@@ -62,7 +51,6 @@ bool goodCharForVar(char x) {
     return (x >= 'A' && x <= 'Z') || (x >= '0' && x <= '9');
 }
 
-bool f;
 void itIsAxiom(linkOnTree vertex, linkOnTree axiom) {
     if (!axiom || !vertex) {
         if (axiom || vertex) 
@@ -108,7 +96,6 @@ char nextToken() {
 
 void nextLexem() {
     nextToken();
-    //cout << it << "  " << s[it] << endl;
     if (!good(it)) {
         curLexem = End;
         return;
@@ -168,10 +155,6 @@ long long getHashStr(string s) {
     return temp;
 }
 
-linkOnTree expr();
-linkOnTree disjunction();
-linkOnTree conjunction();
-
 linkOnTree updateVertex(linkOnTree vertex, linkOnTree left, linkOnTree right, string str) {
     if (!vertex) 
         return left;
@@ -179,7 +162,6 @@ linkOnTree updateVertex(linkOnTree vertex, linkOnTree left, linkOnTree right, st
     vertex->left = left;
     vertex->str = str;
 
-    //cout << "in upd" << left->str << endl;
     int rsize = (vertex->right) ? vertex->right->size : 0; 
     int lsize = (vertex->left) ? vertex->left->size : 0; 
 
@@ -193,12 +175,10 @@ linkOnTree updateVertex(linkOnTree vertex, linkOnTree left, linkOnTree right, st
 
 // not
 linkOnTree nigation() { 
-    //cout << "nig" << curLexem << endl;
     linkOnTree vertex = NULL;
     if (curLexem == Not) {
         vertex = new Tree;
         nextLexem();
-        //cout << "upd" << curLexem << endl;
         updateVertex(vertex, nigation(), NULL, "!");
     } else if(curLexem == Variable) {
         vertex = new Tree;
@@ -207,9 +187,6 @@ linkOnTree nigation() {
     } else if( curLexem == OpenBracket) {
         nextLexem();
         vertex = expr();
-        //cerr << "-------" << endl;
-        //printTree(vertex);
-        //cerr << "-------" << endl;
 
         if (curLexem != CloseBracket) {
             throw runtime_error("expected ) on position" + to_string(it));    
@@ -248,7 +225,6 @@ linkOnTree disjunction() {
 
 // ->, (expr)
 linkOnTree expr() {
-    //cout << "lex in expr" << curLexem << endl;
     linkOnTree left = disjunction(); 
     linkOnTree right = NULL;
     linkOnTree vertex = NULL;
@@ -262,7 +238,6 @@ linkOnTree expr() {
 
 linkOnTree parse(const string& s2) {
     s = s2;
-    //cout << endl << s << endl;
     it = -1; 
     nextLexem(); 
     return expr();
@@ -297,21 +272,29 @@ int main() {
         if (!s.length())
             continue;
         forest.push_back(parse(s));
-        cout << isAxiom(forest[i++]);
+        if (!isAxiom(forest[i])) {
+            long long curHash = forest[i]->hash;
+            long long leftNewHash = 0;
+            bool flag = false;
+            for (int j = i - 1; j >= 0 && !flag; j--) {
+                if (forest[j]->right && forest[j]->right->hash == curHash) {
+                    leftNewHash = forest[j]->left->hash;
+                    for (int z = i - 1; z >= 0; z--) {
+                        if (forest[z]->hash == leftNewHash) {
+                            flag = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!flag) {
+                cout << "Доказательство некорректно начиная с высказывания номер " << i + 1 << "." << endl;
+                return 0;
+            }
+        }
+        i++;
     }
+    cout << "Доказательство корректно.";
 
-
-    //printTree(forest[0]);
-    //printTree(forest[1]);
-    //cout << endl << (forest[0]->hash == forest[1]->hash) << endl;
-    //getline(cin, s);
-    //cout << "-----" << endl;
-    //cout << s << endl;
-    //cout << "-----" << endl;
-
-    //for (auto it : data) {
-        //cout << it << endl;
-    //}
     return 0;
 }
-
