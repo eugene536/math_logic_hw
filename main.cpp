@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
+#include <map>
 
 using namespace std;
 
@@ -37,6 +38,8 @@ string var;
 
 string s;
 vector<linkOnTree> forest;
+vector<linkOnTree> axioms;
+map<string, long long> axiomToHash;
 int it; //iterator
 
 const int maxLen = 1e4;
@@ -59,120 +62,40 @@ bool goodCharForVar(char x) {
     return (x >= 'A' && x <= 'Z') || (x >= '0' && x <= '9');
 }
 
-bool vWithChildren(linkOnTree vertex) {
-    return vertex && vertex->left && vertex->right;
-}
+bool f;
+void itIsAxiom(linkOnTree vertex, linkOnTree axiom) {
+    if (!axiom || !vertex) {
+        if (axiom || vertex) 
+            f = false;
+        return;
+    }
 
-bool goodVertex(linkOnTree vertex) {
-    return vertex && vertex->str == "->";
-}
-
-bool vertexsArrow(string s1 = "->", string s2 = "->", string s3 = "->", string s4 = "->", string s5 = "->") {
-    return  s1 == "->" && s2 == "->" && s3 == "->" && s4 == "->" && s5 == "->";
+    if (goodCharForVar(axiom->str[0])) {
+        if (axiomToHash.count(axiom->str)) {
+            if (axiomToHash[axiom->str] != vertex->hash) {
+                f = false;
+            }
+        } else {
+            axiomToHash[axiom->str] = vertex->hash;
+        }
+    } else if (axiom->str == vertex->str) {
+        itIsAxiom(vertex->left, axiom->left); 
+        itIsAxiom(vertex->right, axiom->right); 
+    } else {
+        f = false;
+        return;
+    }
 }
 
 bool isAxiom(linkOnTree vertex) {
-    if (!(vertex && vertex->left && vertex->right && vertex->str == "->"))
-        return false;
-    linkOnTree vright = vertex->right;
-    linkOnTree vleft = vertex->left;
-
-    //INV: exist ver with children && ver->str == "->"
-    //1 a->b->a
-    if (vWithChildren(vright) &&
-        vright->str == "->" && 
-        vleft->hash == vright->right->hash) 
-    {
-        return true;
+    for (auto it : axioms) {
+        axiomToHash.clear();
+        f = true;
+        itIsAxiom(vertex, it);
+        if (f) {
+            return true;
+        }
     }
-    
-    //2 (a -> b) -> (a -> b -> c) -> (a -> c)
-    if (vWithChildren(vright) &&
-        vWithChildren(vleft) &&
-        vWithChildren(vright->left) &&
-        vWithChildren(vright->right) &&
-        vWithChildren(vright->left->right) &&
-        vertexsArrow(vleft->str, vright->str, vright->left->str, vright->left->right->str, vright->right->str) &&
-
-        vleft->left->hash == vright->left->left->hash && // a
-        vleft->left->hash == vright->right->left->hash && //a
-        vleft->right->hash == vright->left->right->left->hash && //b
-        vright->right->right->hash == vright->left->right->right->hash) //c
-    {
-        return true;
-    }
-
-    //3 a -> b -> a & b
-    if (vWithChildren(vright) &&
-        vWithChildren(vright->right) &&
-        vright->right->str == "&" &&
-        vright->str == "->" &&
-        vleft->hash == vright->right->left->hash &&
-        vright->left->hash == vright->right->right->hash)
-    {
-        return true;
-    }
-
-    //4 a & b -> a
-    if (vleft->str == "&" &&
-        vWithChildren(vleft) && 
-        vleft->left->hash == vright->hash)
-    {
-        return true;
-    }
-
-    //5 b & a -> a
-    if (vleft->str == "&" &&
-        vWithChildren(vleft) && 
-        vleft->right->hash == vright->hash)
-    {
-        return true;
-    }
-
-    //6 a -> a | b
-     if (vright->str == "|" &&
-         vWithChildren(vright) && 
-         vleft->hash == vright->left->hash)
-    {
-        return true;
-    }    
-    
-    //7 a -> b | a
-     if (vright->str == "|" &&
-         vWithChildren(vright) && 
-         vleft->hash == vright->right->hash)
-    {
-        return true;
-    } 
-
-    //8 (a -> c) -> (b -> c) -> (a | b -> c)
-    if (vWithChildren(vleft) &&
-        vWithChildren(vright) &&
-        vWithChildren(vright->left) &&
-        vWithChildren(vright->right) &&
-        vWithChildren(vright->right->left) &&
-        vertexsArrow(vleft->str, vright->str, vright->left->str, vright->right->str) &&
-        vright->right->left->str == "|" &&
-
-        vleft->left->hash == vright->right->left->left->hash && //a
-        vleft->right->hash == vright->left->right->hash && //c
-        vleft->right->hash == vright->right->right->hash && //c
-        vright->left->left->hash == vright->right->left->right->hash) //b 
-    {
-        return true;
-    }
-
-    //9 (a -> b) -> (a -> !b) -> !a
-    if (vWithChildren(vleft) &&
-        vWithChildren(vright) &&
-        vWithChildren(vright->left) &&
-        vright->left->right->left &&
-        vright->right->left &&
-        vertexsArrow(vleft->str, vright->str, vright->left->str) &&
-
-        )
-
-
     return false;
 }
 
@@ -337,7 +260,9 @@ linkOnTree expr() {
     return updateVertex(vertex, left, right, "->");
 }
 
-linkOnTree parse() {
+linkOnTree parse(const string& s2) {
+    s = s2;
+    //cout << endl << s << endl;
     it = -1; 
     nextLexem(); 
     return expr();
@@ -355,11 +280,23 @@ int main() {
         qPow[i] = qPow[i - 1] * q;
     }
 
+    axioms.push_back(parse("A -> B -> A"));
+    axioms.push_back(parse("(A -> B) -> (A -> B -> C) -> (A -> C)"));
+    axioms.push_back(parse("A -> B -> A & B"));
+    axioms.push_back(parse("A & B -> A"));
+    axioms.push_back(parse("A & B -> B"));
+    axioms.push_back(parse("A -> A | B"));
+    axioms.push_back(parse("B -> A | B"));
+    axioms.push_back(parse("(A -> C) -> (B -> C) -> (A | B -> C)"));
+    axioms.push_back(parse("(A -> B) -> (A -> !B) -> !A"));
+    axioms.push_back(parse("!!A -> A"));
+
+
     int i = 0;
     while (getline(cin, s)) {
         if (!s.length())
             continue;
-        forest.push_back(parse());
+        forest.push_back(parse(s));
         cout << isAxiom(forest[i++]);
     }
 
