@@ -14,10 +14,9 @@ struct Tree {
     int size;
     Tree* left;
     Tree* right;
-    Tree(string s = "") {
+    Tree() {
         left = right = NULL;
         hash = size = 0;
-        str = s;
     }
 };
 typedef Tree* linkOnTree;
@@ -41,9 +40,16 @@ vector<linkOnTree> forest;
 int it; //iterator
 
 const int maxLen = 1e4;
-const char arrow = 19;
 long long q = 3;
 long long qPow[maxLen];
+
+void printTree(linkOnTree x, string s = "") {
+    if (x == NULL) 
+        return;
+    printTree(x->left, s + "l");
+    printTree(x->right, s + "r");
+    cout << s << " : "<< x->str << endl;
+}
 
 bool good(int x) {
     return x >= 0 && x < (int) s.length();
@@ -62,7 +68,12 @@ char nextToken() {
 
 void nextLexem() {
     nextToken();
-    cout << it << "  " << s[it] << endl;
+    //cout << it << "  " << s[it] << endl;
+    if (!good(it)) {
+        curLexem = End;
+        return;
+    }
+
     switch(s[it]) {
         case '(':
             curLexem = OpenBracket;        
@@ -100,7 +111,8 @@ void nextLexem() {
                    var.push_back(s[it]); 
                    it++;
                 } 
-                curLexem = OpenBracket;        
+                it--;
+                curLexem = Variable;        
             } else {
                 throw runtime_error("unexpected token on position" + to_string(it));
             }
@@ -120,30 +132,44 @@ linkOnTree expr();
 linkOnTree disjunction();
 linkOnTree conjunction();
 
+linkOnTree updateVertex(linkOnTree vertex, linkOnTree left, linkOnTree right, string str) {
+    if (!vertex) 
+        return left;
+    vertex->right = right;
+    vertex->left = left;
+    vertex->str = str;
+
+    //cout << "in upd" << left->str << endl;
+    int rsize = (vertex->right) ? vertex->right->size : 0; 
+    int lsize = (vertex->left) ? vertex->left->size : 0; 
+
+    int rhash = (vertex->right) ? vertex->right->hash : 0; 
+    int lhash = (vertex->left) ? vertex->left->hash : 0; 
+
+    vertex->size = lsize + rsize + 1;
+    vertex->hash = lhash + qPow[lsize] * (getHashStr(str) + rhash * q);
+    return vertex;
+}
+
 // not
 linkOnTree nigation() { 
+    //cout << "nig" << curLexem << endl;
     linkOnTree vertex = NULL;
     if (curLexem == Not) {
-        vertex = new Tree();
-        vertex->str = "!";
+        vertex = new Tree;
         nextLexem();
-        vertex->left = nigation();
-        int rsize = (vertex->right) ? vertex->right->size : 0; 
-        int lsize = (vertex->left) ? vertex->left->size : 0; 
-
-        int rhash = (vertex->right) ? vertex->right->hash : 0; 
-        int lhash = (vertex->left) ? vertex->left->hash : 0; 
-
-        vertex->size = lsize + rsize + 1;
-        vertex->hash = lhash + qPow[lsize] * ('!' + rhash * q);
+        //cout << "upd" << curLexem << endl;
+        updateVertex(vertex, nigation(), NULL, "!");
     } else if(curLexem == Variable) {
-        vertex = new Tree();
-        vertex->str = var;
-        vertex->size = 1;
-        vertex->hash = getHashStr(var);
+        vertex = new Tree;
+        nextLexem();
+        updateVertex(vertex, NULL, NULL, var); 
     } else if( curLexem == OpenBracket) {
         nextLexem();
         vertex = expr();
+        //cerr << "-------" << endl;
+        //printTree(vertex);
+        //cerr << "-------" << endl;
 
         if (curLexem != CloseBracket) {
             throw runtime_error("expected ) on position" + to_string(it));    
@@ -156,76 +182,42 @@ linkOnTree nigation() {
 
 // &
 linkOnTree conjunction() {
-    linkOnTree left = conjunction();
+    linkOnTree left = nigation();
     linkOnTree vertex = NULL;
-    if (curLexem == Or) {
-        vertex = new Tree("&");
-        vertex->left = left;
+    linkOnTree right = NULL;
+    if (curLexem == And) {
+        vertex = new Tree;
         nextLexem();
-        vertex->right = disjunction();
-
-        int rsize = vertex->right->size;
-        int lsize = vertex->left->size;
-
-        int rhash = vertex->right->hash; 
-        int lhash = vertex->left->hash; 
-
-        vertex->size = lsize + rsize + 1;
-        vertex->hash = lhash + qPow[lsize] * ('&' + rhash * q);
-
+        right = conjunction();
     }
-    if (!vertex) 
-        return left;
-    return vertex;
+    return updateVertex(vertex, left, right, "&");
 }
 
 // |
 linkOnTree disjunction() {
     linkOnTree left = conjunction();
     linkOnTree vertex = NULL;
+    linkOnTree right = NULL;
     if (curLexem == Or) {
-        vertex = new Tree("|");
-        vertex->left = left;
+        vertex = new Tree;
         nextLexem();
-        vertex->right = disjunction();
-
-        int rsize = vertex->right->size;
-        int lsize = vertex->left->size;
-
-        int rhash = vertex->right->hash; 
-        int lhash = vertex->left->hash; 
-
-        vertex->size = lsize + rsize + 1;
-        vertex->hash = lhash + qPow[lsize] * ('|' + rhash * q);
-
+        right = disjunction(); 
     }
-    if (!vertex) 
-        return left;
-    return vertex;
+    return updateVertex(vertex, left, right, "|");
 }
 
 // ->, (expr)
 linkOnTree expr() {
+    //cout << "lex in expr" << curLexem << endl;
     linkOnTree left = disjunction(); 
+    linkOnTree right = NULL;
     linkOnTree vertex = NULL;
     if (curLexem == Entailment) {
-        linkOnTree vertex = new Tree(string(1, arrow));
-        vertex->left = left;
+        vertex = new Tree;
         nextLexem();
-        vertex->right = expr();
-
-        int rsize = vertex->right->size;
-        int lsize = vertex->left->size;
-
-        int rhash = vertex->right->hash; 
-        int lhash = vertex->left->hash; 
-
-        vertex->size = lsize + rsize + 1;
-        vertex->hash = lhash + qPow[lsize] * (arrow + rhash * q);
+        right = expr();
     }
-    if (!vertex) 
-        return left;
-    return vertex;
+    return updateVertex(vertex, left, right, "->");
 }
 
 linkOnTree parse() {
@@ -233,6 +225,7 @@ linkOnTree parse() {
     nextLexem(); 
     return expr();
 }
+
 
 int main() {
     #ifdef DEBUG
@@ -248,6 +241,10 @@ int main() {
     while (getline(cin, s)) {
         forest.push_back(parse());
     }
+
+    printTree(forest[0]);
+    printTree(forest[1]);
+    cout << endl << (forest[0]->hash == forest[1]->hash) << endl;
     //getline(cin, s);
     //cout << "-----" << endl;
     //cout << s << endl;
