@@ -1,4 +1,3 @@
-//INV: data are correct
 #include <iostream>
 #include <cstdio>
 #include <cstring>
@@ -51,6 +50,16 @@ bool goodCharForVar(char x) {
     return (x >= 'A' && x <= 'Z') || (x >= '0' && x <= '9');
 }
 
+string trimWhiteSpace(string const& s) {
+    string temp;
+    for (auto c : s) {
+        if (!isspace(c)) {
+            temp.push_back(c);
+        }
+    }
+    return temp;
+}
+
 void itIsAxiom(linkOnTree vertex, linkOnTree axiom) {
     if (!axiom || !vertex) {
         if (axiom || vertex) 
@@ -75,16 +84,16 @@ void itIsAxiom(linkOnTree vertex, linkOnTree axiom) {
     }
 }
 
-bool isAxiom(linkOnTree vertex) {
-    for (auto it : axioms) {
+int isAxiom(linkOnTree vertex) {
+    for (int i = 0; i < (int) axioms.size(); i++)  {
         axiomToHash.clear();
         f = true;
-        itIsAxiom(vertex, it);
+        itIsAxiom(vertex, axioms[i]);
         if (f) {
-            return true;
+            return i + 1;
         }
     }
-    return false;
+    return 0;
 }
 
 char nextToken() {
@@ -147,7 +156,7 @@ void nextLexem() {
     } 
 }
 
-long long getHashStr(string s) {
+long long getHashStr(string const& s) {
     long long temp = 0;
     for (int i = 0; i < (int) s.length(); i++) {
         temp += qPow[i] * s[i];
@@ -155,7 +164,7 @@ long long getHashStr(string s) {
     return temp;
 }
 
-linkOnTree updateVertex(linkOnTree vertex, linkOnTree left, linkOnTree right, string str) {
+linkOnTree updateVertex(linkOnTree vertex, linkOnTree left, linkOnTree right, string const& str) {
     if (!vertex) 
         return left;
     vertex->right = right;
@@ -244,10 +253,21 @@ linkOnTree parse(const string& s2) {
 }
 
 
+void output(int n, string const& s, int flag, int x = 0, int y = 0) {
+    cout << "(" << n + 1 << ") " << trimWhiteSpace(s); 
+    if (flag == 0)
+        cout << " (Сх. акс. " << x << ")";
+    else if (flag == 1)
+        cout << " (M.P. " << x + 1 << ", " << y + 1 << ")";
+    else
+        cout << " (Не доказано)";
+    cout << endl;
+}
+
 int main() {
     #ifdef DEBUG
     freopen("in", "r", stdin);
-    //freopen("out", "w", stdout);
+    freopen("out", "w", stdout);
     #endif
 
     qPow[0] = 1;
@@ -272,7 +292,10 @@ int main() {
         if (!s.length())
             continue;
         forest.push_back(parse(s));
-        if (!isAxiom(forest[i])) {
+        int nAxiom;
+        if (nAxiom = isAxiom(forest[i])) {
+            output(i, s, 0, nAxiom);
+        } else {
             long long curHash = forest[i]->hash;
             long long leftNewHash = 0;
             bool flag = false;
@@ -282,19 +305,19 @@ int main() {
                     for (int z = i - 1; z >= 0; z--) {
                         if (forest[z]->hash == leftNewHash) {
                             flag = true;
+                            output(i, s, 1, z, j);
                             break;
                         }
                     }
                 }
             }
             if (!flag) {
-                cout << "Доказательство некорректно начиная с высказывания номер " << i + 1 << "." << endl;
+                output(i, s, 2);
                 return 0;
             }
         }
         i++;
     }
-    cout << "Доказательство корректно.";
 
     return 0;
 }
