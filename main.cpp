@@ -5,6 +5,7 @@
 #include <vector>
 #include <stdexcept>
 #include <map>
+#include <unordered_map>
 
 using namespace std;
 
@@ -30,7 +31,9 @@ string var;
 string s;
 vector<linkOnTree> forest;
 vector<linkOnTree> axioms;
-map<string, long long> axiomToHash;
+unordered_map<string, long long> axiomToHash;
+unordered_map<long long, pair<int, linkOnTree> > rightTreeHash;
+unordered_map<long long, pair<int, linkOnTree> > prevTreeHash;
 int it; 
 
 const int maxLen = 1e4;
@@ -266,10 +269,10 @@ void output(int n, string const& s, int flag, int x = 0, int y = 0) {
 
 int main() {
     #ifdef DEBUG
-    freopen("in", "r", stdin);
+    freopen("in2", "r", stdin);
     freopen("out", "w", stdout);
     #endif
-
+    double start = clock() * 1.0 / CLOCKS_PER_SEC;  
     qPow[0] = 1;
     for (int i = 1; i < maxLen; i++) {
         qPow[i] = qPow[i - 1] * q;
@@ -286,28 +289,26 @@ int main() {
     axioms.push_back(parse("(A -> B) -> (A -> !B) -> !A"));
     axioms.push_back(parse("!!A -> A"));
 
-
+    
     int i = 0;
     while (getline(cin, s)) {
         if (!s.length())
             continue;
         forest.push_back(parse(s));
+
         int nAxiom;
         if (nAxiom = isAxiom(forest[i])) {
             output(i, s, 0, nAxiom);
         } else {
-            long long curHash = forest[i]->hash;
-            long long leftNewHash = 0;
             bool flag = false;
-            for (int j = i - 1; j >= 0 && !flag; j--) {
-                if (forest[j]->right && forest[j]->right->hash == curHash) {
-                    leftNewHash = forest[j]->left->hash;
-                    for (int z = i - 1; z >= 0; z--) {
-                        if (forest[z]->hash == leftNewHash) {
-                            flag = true;
-                            output(i, s, 1, z, j);
-                            break;
-                        }
+            auto iterOnTree = rightTreeHash.find(forest[i]->hash);
+            if (iterOnTree != rightTreeHash.end()) {
+                linkOnTree findedTree = iterOnTree->second.second;
+                if (findedTree->str == "->") {
+                    auto iterOnLeftTree = prevTreeHash.find(findedTree->left->hash);
+                    if (iterOnLeftTree != prevTreeHash.end()) {
+                        flag = true;
+                        output(i, s, 1, iterOnLeftTree->second.first, iterOnTree->second.first);
                     }
                 }
             }
@@ -316,8 +317,15 @@ int main() {
                 return 0;
             }
         }
+
+        prevTreeHash[forest[i]->hash] = make_pair(i, forest[i]);
+        if (forest[i]->right) 
+            rightTreeHash[forest[i]->right->hash] = make_pair(i, forest[i]);
+
         i++;
     }
+    double finish = clock() * 1.0 / CLOCKS_PER_SEC;  
+    cerr << finish - start << endl;
 
     return 0;
 }
