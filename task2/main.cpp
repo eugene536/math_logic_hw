@@ -5,7 +5,6 @@
 #include <vector>
 #include <stdexcept>
 #include <map>
-#include <unordered_map>
 
 using namespace std;
 
@@ -31,9 +30,7 @@ string var;
 string s;
 vector<linkOnTree> forest;
 vector<linkOnTree> axioms;
-unordered_map<string, long long> axiomToHash;
-unordered_map<long long, pair<int, linkOnTree> > rightTreeHash;
-unordered_map<long long, pair<int, linkOnTree> > prevTreeHash;
+map<string, long long> axiomToHash;
 int it; 
 
 const int maxLen = 1e4;
@@ -256,15 +253,10 @@ linkOnTree parse(const string& s2) {
 }
 
 
-void output(int n, string const& s, int flag, int x = 0, int y = 0) {
-    cout << "(" << n + 1 << ") " << trimWhiteSpace(s); 
-    if (flag == 0)
-        cout << " (Сх. акс. " << x << ")";
-    else if (flag == 1)
-        cout << " (M.P. " << x + 1 << ", " << y + 1 << ")";
-    else
-        cout << " (Не доказано)";
-    cout << endl;
+void output(string const& s1, string const& s2, string const& s3 = "") {
+    cout << "(" << s1 << ")" << "->(" << s2 << ")";
+    if (s3 != "") 
+        cout << "->(" << s1 << ")";
 }
 
 int main() {
@@ -272,7 +264,7 @@ int main() {
     freopen("in", "r", stdin);
     freopen("out", "w", stdout);
     #endif
-    double start = clock() * 1.0 / CLOCKS_PER_SEC;  
+    double start = clock() * 1.0 / CLOCKS_PER_SEC;
     qPow[0] = 1;
     for (int i = 1; i < maxLen; i++) {
         qPow[i] = qPow[i - 1] * q;
@@ -289,42 +281,83 @@ int main() {
     axioms.push_back(parse("(A -> B) -> (A -> !B) -> !A"));
     axioms.push_back(parse("!!A -> A"));
 
-    
+    string temp;
+    s = "";
+    getline(cin, temp);
+    int turniketPos = temp.find("|-");
+    for (int i = 0; i < turniketPos; i++) {
+        if (temp[i] == ',') {
+            axioms.push_back(parse(s));
+            s = "";
+            continue;
+        }
+        s.push_back(temp[i]);
+    }
+    temp = "(" + s + ")";
+    vector<string> history;
+
     int i = 0;
     while (getline(cin, s)) {
         if (!s.length())
             continue;
+
+        s = "(" + s + ")";
+        history.push_back(s);
         forest.push_back(parse(s));
 
         int nAxiom;
         if (nAxiom = isAxiom(forest[i])) {
-            output(i, s, 0, nAxiom);
-        } else {
+            cout << s << endl;
+            cout << s << "->" << temp << "->" << s << endl;
+            cout << temp << "->" << s << endl;
+        } else { // MP
+            long long curHash = forest[i]->hash;
+            long long leftNewHash = 0;
             bool flag = false;
-            auto iterOnTree = rightTreeHash.find(forest[i]->hash);
-            if (iterOnTree != rightTreeHash.end()) {
-                linkOnTree findedTree = iterOnTree->second.second;
-                if (findedTree->str == "->") {
-                    auto iterOnLeftTree = prevTreeHash.find(findedTree->left->hash);
-                    if (iterOnLeftTree != prevTreeHash.end()) {
-                        flag = true;
-                        output(i, s, 1, iterOnLeftTree->second.first, iterOnTree->second.first);
+            for (int j = i - 1; j >= 0 && !flag; j--) {
+                if (forest[j]->right && forest[j]->right->hash == curHash) {
+                    leftNewHash = forest[j]->left->hash;
+                    for (int z = i - 1; z >= 0; z--) {
+                        if (forest[z]->hash == leftNewHash) {
+                            flag = true;
+                            cout << '(' << temp << "->" << history[z] << ")->";
+                            cout << "(" << temp << "->" << history[z] << "->" << s << ")->";
+                            cout << temp << "->" << s << endl;
+
+                            cout << "(" << temp << "->" << history[z] << "->" << s << ")->";
+                            cout << temp << "->" << s << endl;
+
+                            cout << temp << "->" << s << endl;
+                            break;
+                        }
                     }
                 }
             }
+
+            //a -> a
             if (!flag) {
-                output(i, s, 2);
-                return 0;
+                // a->a->a
+                cout << temp << "->" << temp << "->" << temp << endl;
+
+                //aks 2
+                cout << "(" << temp << "->" << temp << "->" << temp << ")->";
+                cout << "(" << temp << "->" << "(" << temp << "->" << temp << ")->" << temp << ")->";
+                cout << temp << "->" << temp << endl;
+
+                //MP
+                cout << "(" << temp << "->" << "(" << temp << "->" << temp << ")->" << temp << ")->";
+                cout << temp << "->" << temp << endl;
+
+                // aks 1
+                cout << "(" << temp << "->" << "(" << temp << "->" << temp << ")->" << temp << ")" << endl;
+
+                //MP
+                cout << temp << "->" << temp << endl;
             }
         }
-
-        prevTreeHash[forest[i]->hash] = make_pair(i, forest[i]);
-        if (forest[i]->right) 
-            rightTreeHash[forest[i]->right->hash] = make_pair(i, forest[i]);
-
         i++;
     }
-    double finish = clock() * 1.0 / CLOCKS_PER_SEC;  
+    double finish = clock() * 1.0 / CLOCKS_PER_SEC;
     cerr << finish - start << endl;
 
     return 0;
