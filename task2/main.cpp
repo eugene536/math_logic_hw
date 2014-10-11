@@ -5,6 +5,7 @@
 #include <vector>
 #include <stdexcept>
 #include <map>
+#include <unordered_map>
 
 using namespace std;
 
@@ -29,9 +30,11 @@ string var;
 
 string s;
 vector<linkOnTree> forest;
+vector<bool> isContext;
 vector<linkOnTree> axioms;
-map<string, long long> axiomToHash;
+unordered_map<string, long long> axiomToHash;
 int it; 
+int curAxiom;
 
 const int maxLen = 1e4;
 long long q = 3;
@@ -68,14 +71,16 @@ void itIsAxiom(linkOnTree vertex, linkOnTree axiom) {
     }
 
     if (goodCharForVar(axiom->str[0])) {
-        if (axiomToHash.count(axiom->str)) {
-            if (axiomToHash[axiom->str] != vertex->hash) {
+        if (isContext[curAxiom] || axiomToHash.count(axiom->str)) {
+            if ((!isContext[curAxiom] && (axiomToHash[axiom->str] != vertex->hash)) ||
+                 (isContext[curAxiom] && (axiom->str != vertex->str))) {
                 f = false;
             }
         } else {
             axiomToHash[axiom->str] = vertex->hash;
         }
     } else if (axiom->str == vertex->str) {
+
         itIsAxiom(vertex->left, axiom->left); 
         itIsAxiom(vertex->right, axiom->right); 
     } else {
@@ -85,12 +90,12 @@ void itIsAxiom(linkOnTree vertex, linkOnTree axiom) {
 }
 
 int isAxiom(linkOnTree vertex) {
-    for (int i = 0; i < (int) axioms.size(); i++)  {
+    for (curAxiom = 0; curAxiom < (int) axioms.size(); curAxiom++)  {
         axiomToHash.clear();
         f = true;
-        itIsAxiom(vertex, axioms[i]);
+        itIsAxiom(vertex, axioms[curAxiom]);
         if (f) {
-            return i + 1;
+            return curAxiom + 1;
         }
     }
     return 0;
@@ -252,11 +257,19 @@ linkOnTree parse(const string& s2) {
     return expr();
 }
 
-
 void output(string const& s1, string const& s2, string const& s3 = "") {
     cout << "(" << s1 << ")" << "->(" << s2 << ")";
     if (s3 != "") 
         cout << "->(" << s1 << ")";
+}
+
+
+void printTree(linkOnTree i) {
+    if (i == NULL)
+        return;
+    printTree(i->left);
+    printTree(i->right);
+    cerr << i->str << endl;
 }
 
 int main() {
@@ -270,23 +283,25 @@ int main() {
         qPow[i] = qPow[i - 1] * q;
     }
 
-    axioms.push_back(parse("A -> B -> A"));
-    axioms.push_back(parse("(A -> B) -> (A -> B -> C) -> (A -> C)"));
-    axioms.push_back(parse("A -> B -> A & B"));
-    axioms.push_back(parse("A & B -> A"));
-    axioms.push_back(parse("A & B -> B"));
-    axioms.push_back(parse("A -> A | B"));
-    axioms.push_back(parse("B -> A | B"));
-    axioms.push_back(parse("(A -> C) -> (B -> C) -> (A | B -> C)"));
-    axioms.push_back(parse("(A -> B) -> (A -> !B) -> !A"));
-    axioms.push_back(parse("!!A -> A"));
+    axioms.push_back(parse("A->B->A"));
+    axioms.push_back(parse("(A->B)->(A->B->C)->(A->C)"));
+    axioms.push_back(parse("A->B->A&B"));
+    axioms.push_back(parse("A&B->A"));
+    axioms.push_back(parse("A&B->B"));
+    axioms.push_back(parse("A->A|B"));
+    axioms.push_back(parse("B->A|B"));
+    axioms.push_back(parse("(A->C)->(B->C)->(A|B->C)"));
+    axioms.push_back(parse("(A->B)->(A->!B)->!A"));
+    axioms.push_back(parse("!!A->A"));
 
     string temp;
     s = "";
     getline(cin, temp);
     int turniketPos = temp.find("|-");
+    isContext.resize(10, false);
     for (int i = 0; i < turniketPos; i++) {
         if (temp[i] == ',') {
+            isContext.push_back(true);
             axioms.push_back(parse(s));
             s = "";
             continue;
