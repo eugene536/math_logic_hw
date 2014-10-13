@@ -3,12 +3,18 @@
 
 CMakeFiles/main.dir/checkOnFalse.cpp.o
  /home/eugene/2 course/math logic/math_logic/task3/checkOnFalse.cpp
- /home/eugene/2 course/math logic/math_logic/task3/checkOnFalse.h
- /home/eugene/2 course/math logic/math_logic/task3/parser.h
+ headers/checkOnFalse.h
+ headers/deduction.h
+ headers/parser.h
+CMakeFiles/main.dir/deduction.cpp.o
+ /home/eugene/2 course/math logic/math_logic/task3/deduction.cpp
+ headers/deduction.h
+ headers/parser.h
 CMakeFiles/main.dir/main.cpp.o
- /home/eugene/2 course/math logic/math_logic/task3/checkOnFalse.h
  /home/eugene/2 course/math logic/math_logic/task3/main.cpp
- /home/eugene/2 course/math logic/math_logic/task3/parser.h
+ headers/checkOnFalse.h
+ headers/deduction.h
+ headers/parser.h
 CMakeFiles/main.dir/parser.cpp.o
  /home/eugene/2 course/math logic/math_logic/task3/parser.cpp
- /home/eugene/2 course/math logic/math_logic/task3/parser.h
+ headers/parser.h

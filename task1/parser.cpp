@@ -15,6 +15,11 @@ parser::Tree::Tree(){
     hash = size = 0;
 }
 
+parser::Tree::~Tree(){
+    delete left;
+    delete right;
+}
+
 void parser::print(parser::linkOnTree t) {
     if (t == NULL) 
         return;

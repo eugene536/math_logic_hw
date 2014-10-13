@@ -12,6 +12,7 @@ struct parser {
         Tree* left;
         Tree* right;
         Tree();
+        ~Tree();
     };
     typedef Tree* linkOnTree;
     linkOnTree parse(const std::string& s2);

@@ -7,8 +7,10 @@
 struct deduction {
     deduction();
     std::vector<std::string> result;
+    std::string resultProofExpr;
     void doDeduction(std::vector<std::string> const&);
     int sz();
+    ~deduction();
 
 private:
     std::string s;

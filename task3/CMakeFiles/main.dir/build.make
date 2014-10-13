@@ -95,9 +95,32 @@ CMakeFiles/main.dir/parser.cpp.o.provides: CMakeFiles/main.dir/parser.cpp.o.requ
 
 CMakeFiles/main.dir/parser.cpp.o.provides.build: CMakeFiles/main.dir/parser.cpp.o
 
+CMakeFiles/main.dir/deduction.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/deduction.cpp.o: deduction.cpp
+	$(CMAKE_COMMAND) -E cmake_progress_report "/home/eugene/2 course/math logic/math_logic/task3/CMakeFiles" $(CMAKE_PROGRESS_3)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building CXX object CMakeFiles/main.dir/deduction.cpp.o"
+	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -o CMakeFiles/main.dir/deduction.cpp.o -c "/home/eugene/2 course/math logic/math_logic/task3/deduction.cpp"
+
+CMakeFiles/main.dir/deduction.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/deduction.cpp.i"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -E "/home/eugene/2 course/math logic/math_logic/task3/deduction.cpp" > CMakeFiles/main.dir/deduction.cpp.i
+
+CMakeFiles/main.dir/deduction.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/deduction.cpp.s"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -S "/home/eugene/2 course/math logic/math_logic/task3/deduction.cpp" -o CMakeFiles/main.dir/deduction.cpp.s
+
+CMakeFiles/main.dir/deduction.cpp.o.requires:
+.PHONY : CMakeFiles/main.dir/deduction.cpp.o.requires
+
+CMakeFiles/main.dir/deduction.cpp.o.provides: CMakeFiles/main.dir/deduction.cpp.o.requires
+	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/deduction.cpp.o.provides.build
+.PHONY : CMakeFiles/main.dir/deduction.cpp.o.provides
+
+CMakeFiles/main.dir/deduction.cpp.o.provides.build: CMakeFiles/main.dir/deduction.cpp.o
+
 CMakeFiles/main.dir/checkOnFalse.cpp.o: CMakeFiles/main.dir/flags.make
 CMakeFiles/main.dir/checkOnFalse.cpp.o: checkOnFalse.cpp
-	$(CMAKE_COMMAND) -E cmake_progress_report "/home/eugene/2 course/math logic/math_logic/task3/CMakeFiles" $(CMAKE_PROGRESS_3)
+	$(CMAKE_COMMAND) -E cmake_progress_report "/home/eugene/2 course/math logic/math_logic/task3/CMakeFiles" $(CMAKE_PROGRESS_4)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building CXX object CMakeFiles/main.dir/checkOnFalse.cpp.o"
 	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -o CMakeFiles/main.dir/checkOnFalse.cpp.o -c "/home/eugene/2 course/math logic/math_logic/task3/checkOnFalse.cpp"
 
@@ -122,6 +145,7 @@ CMakeFiles/main.dir/checkOnFalse.cpp.o.provides.build: CMakeFiles/main.dir/check
 main_OBJECTS = \
 "CMakeFiles/main.dir/main.cpp.o" \
 "CMakeFiles/main.dir/parser.cpp.o" \
+"CMakeFiles/main.dir/deduction.cpp.o" \
 "CMakeFiles/main.dir/checkOnFalse.cpp.o"
 
 # External object files for target main
@@ -129,6 +153,7 @@ main_EXTERNAL_OBJECTS =
 
 main: CMakeFiles/main.dir/main.cpp.o
 main: CMakeFiles/main.dir/parser.cpp.o
+main: CMakeFiles/main.dir/deduction.cpp.o
 main: CMakeFiles/main.dir/checkOnFalse.cpp.o
 main: CMakeFiles/main.dir/build.make
 main: CMakeFiles/main.dir/link.txt
@@ -141,6 +166,7 @@ CMakeFiles/main.dir/build: main
 
 CMakeFiles/main.dir/requires: CMakeFiles/main.dir/main.cpp.o.requires
 CMakeFiles/main.dir/requires: CMakeFiles/main.dir/parser.cpp.o.requires
+CMakeFiles/main.dir/requires: CMakeFiles/main.dir/deduction.cpp.o.requires
 CMakeFiles/main.dir/requires: CMakeFiles/main.dir/checkOnFalse.cpp.o.requires
 .PHONY : CMakeFiles/main.dir/requires
 

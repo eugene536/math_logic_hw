@@ -15,6 +15,15 @@ parser::Tree::Tree(){
     hash = size = 0;
 }
 
+parser::Tree::~Tree() {
+    delete left;
+    delete right;
+}
+
+// WTF why proggram doesn't work without this destructor ??? 
+parser::~parser() {
+}
+
 void parser::print(parser::linkOnTree t) {
     if (t == NULL) 
         return;
@@ -117,7 +126,11 @@ parser::linkOnTree parser::updateVertex(linkOnTree vertex, linkOnTree left, link
 
     string lSubStr = (vertex->left) ? "(" + vertex->left->exprSubTree + ")" : "";
     string rSubStr = (vertex->right) ?  "(" + vertex->right->exprSubTree + ")" : "";
-    vertex->exprSubTree = lSubStr + str + rSubStr;
+    if (str == "!") {
+        vertex->exprSubTree = str + lSubStr;
+    } else {
+        vertex->exprSubTree = lSubStr + str + rSubStr;
+    }
     return vertex;
 }
 
@@ -137,7 +150,7 @@ parser::linkOnTree parser::nigation() {
         vertex = expr();
 
         if (curLexem != CloseBracket) {
-            throw runtime_error("expected ) on position" + to_string(it));    
+            throw runtime_error("expected ) on position" + to_string(it) + "\n" + s);    
         } else {
             nextLexem();
         }

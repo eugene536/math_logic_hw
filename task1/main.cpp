@@ -4,18 +4,18 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
-#include <map>
-#include <unordered_map>
-#include "parser.h" 
+#include "parser.h"
 
-using namespace std; 
+using namespace std;
+
+string var;
+
 string s;
 vector<parser::linkOnTree> forest;
 vector<parser::linkOnTree> axioms;
 unordered_map<string, long long> axiomToHash;
-unordered_map<long long, pair<int, parser::linkOnTree> > rightTreeHash;
-unordered_map<long long, pair<int, parser::linkOnTree> > prevTreeHash;
 int it; 
+
 bool f;
 
 string trimWhiteSpace(string const& s) {
@@ -27,6 +27,18 @@ string trimWhiteSpace(string const& s) {
     }
     return temp;
 }
+
+void output(int n, string const& s, int flag, int x = 0, int y = 0) {
+    cout << "(" << n + 1 << ") " << trimWhiteSpace(s); 
+    if (flag == 0)
+        cout << " (Сх. акс. " << x << ")";
+    else if (flag == 1)
+        cout << " (M.P. " << x + 1 << ", " << y + 1 << ")";
+    else
+        cout << " (Не доказано)";
+    cout << endl;
+}
+
 
 void itIsAxiom(parser::linkOnTree vertex, parser::linkOnTree axiom) {
     if (!axiom || !vertex) {
@@ -64,16 +76,6 @@ int isAxiom(parser::linkOnTree vertex) {
     return 0;
 }
 
-void output(int n, string const& s, int flag, int x = 0, int y = 0) {
-    cout << "(" << n + 1 << ") " << trimWhiteSpace(s); 
-    if (flag == 0)
-        cout << " (Сх. акс. " << x << ")";
-    else if (flag == 1)
-        cout << " (M.P. " << x + 1 << ", " << y + 1 << ")";
-    else
-        cout << " (Не доказано)";
-    cout << endl;
-}
 
 parser main_parser;
 int main() {
@@ -93,26 +95,28 @@ int main() {
     axioms.push_back(main_parser.parse("(A -> B) -> (A -> !B) -> !A"));
     axioms.push_back(main_parser.parse("!!A -> A"));
 
-    
+
     int i = 0;
     while (getline(cin, s)) {
         if (!s.length())
             continue;
         forest.push_back(main_parser.parse(s));
-
         int nAxiom = isAxiom(forest[i]);
         if (nAxiom) {
             output(i, s, 0, nAxiom);
         } else {
+            long long curHash = forest[i]->hash;
+            long long leftNewHash = 0;
             bool flag = false;
-            auto iterOnTree = rightTreeHash.find(forest[i]->hash);
-            if (iterOnTree != rightTreeHash.end()) {
-                parser::linkOnTree findedTree = iterOnTree->second.second;
-                if (findedTree->str == "->") {
-                    auto iterOnLeftTree = prevTreeHash.find(findedTree->left->hash);
-                    if (iterOnLeftTree != prevTreeHash.end()) {
-                        flag = true;
-                        output(i, s, 1, iterOnLeftTree->second.first, iterOnTree->second.first);
+            for (int j = i - 1; j >= 0 && !flag; j--) {
+                if (forest[j]->right && forest[j]->right->hash == curHash) {
+                    leftNewHash = forest[j]->left->hash;
+                    for (int z = i - 1; z >= 0; z--) {
+                        if (forest[z]->hash == leftNewHash) {
+                            flag = true;
+                            output(i, s, 1, z, j);
+                            break;
+                        }
                     }
                 }
             }
@@ -121,11 +125,6 @@ int main() {
                 return 0;
             }
         }
-
-        prevTreeHash[forest[i]->hash] = make_pair(i, forest[i]);
-        if (forest[i]->right) 
-            rightTreeHash[forest[i]->right->hash] = make_pair(i, forest[i]);
-
         i++;
     }
 

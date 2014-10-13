@@ -1,14 +1,13 @@
 #include "deduction.h"
 #include <iostream>
-
 using namespace std;
 
 bool deduction::good(int x) {
     return x >= 0 && x < (int) s.length();
 }
 
-string deduction::trimWhiteSpace(string const& s) {
-    string temp;
+std::string deduction::trimWhiteSpace(std::string const& s) {
+    std::string temp;
     for (auto c : s)
         if (!isspace(c))
             temp.push_back(c);
@@ -21,8 +20,9 @@ bool deduction::isContext() {
 
 void deduction::itIsAxiom(parser::linkOnTree vertex, parser::linkOnTree axiom) {
     if (!axiom || !vertex) {
-        if (axiom || vertex) 
+        if (axiom || vertex) {
             f = false;
+        } 
         return;
     }
 
@@ -32,7 +32,7 @@ void deduction::itIsAxiom(parser::linkOnTree vertex, parser::linkOnTree axiom) {
                  (isContext() && (axiom->str != vertex->str))) {
                 f = false;
             }
-        } else {
+        } else if (!isContext()){
             axiomToHash[axiom->str] = vertex->hash;
         }
     } else if (axiom->str == vertex->str) {
@@ -56,7 +56,7 @@ int deduction::isAxiom(parser::linkOnTree vertex) {
     return 0;
 }
 
-void deduction::output(string const& s1, string const& s2, string const& s3 = "") {
+void deduction::output(std::string const& s1, std::string const& s2, std::string const& s3 = "") {
     result[r_sz] = "(" + s1 + ")" + "->(" + s2 + ")";
     if (s3 != "") 
         result[r_sz] = "->(" + s1 + ")";
@@ -75,29 +75,60 @@ deduction::deduction() {
     axioms.push_back(main_parser.parse("!!A->A"));
 }
 
-void deduction::doDeduction(vector<string> const& expr) { 
-    s = "";
-    curExpr = 0;
-    expressions = expr;
-    for (int i = 1; i < (int) expressions.size(); i++) {
-        expressions[i] = "(" + expressions[i] + ")";
+deduction::~deduction() {
+    for (int i = 0; i < (int) axioms.size(); i++) {
+        delete axioms[i];
     }
 
-    lastContext = expressions[curExpr++];
+    for (int i = 0; i < (int) forest.size(); i++) {
+        delete forest[i];
+    }
+}
+
+void deduction::doDeduction(vector<string> const& expr) { 
+    std::vector<std::string> history;
+    std::string exprAfterDeduction;
+    int i = 0;
+    s = "";
+    curExpr = 0;
+    result.clear();
+    expressions.clear();
+    forest.clear();
+    f = false;
+
+    lastContext = expr[curExpr++];
     int turniketPos = lastContext.find("|-");
+    int commaPos = 0;
+    int cntNewAxioms = 0;
     for (int i = 0; i < turniketPos; i++) {
         if (lastContext[i] == ',') {
+            commaPos = i;
             axioms.push_back(main_parser.parse(s));
+            cntNewAxioms++;
             s = "";
             continue;
         }
         s.push_back(lastContext[i]);
     }
-    lastContext = "(" + s + ")";
-    vector<string> history;
-    result.push_back("");
 
-    int i = 0;
+    if (!s.length()) { // if expr is without context
+        result = expr;
+        return;
+    }
+
+    exprAfterDeduction = lastContext.substr(0, commaPos);
+    resultProofExpr = lastContext.substr(turniketPos + 2);
+    if (exprAfterDeduction.size()) { // if Context != "" 
+        exprAfterDeduction += "|-(" + s + ")->" + resultProofExpr;
+        result.push_back(exprAfterDeduction); // .push_back(newContext without lastContext)
+    }
+    lastContext = "(" + s + ")";
+    result.push_back("");
+    expressions = expr;
+    for (int i = 1; i < (int) expressions.size(); i++) {
+        expressions[i] = "(" + expressions[i] + ")";
+    }
+
     for (;curExpr < (int) expressions.size(); curExpr++) {
         s = expressions[curExpr];
 
@@ -170,4 +201,11 @@ void deduction::doDeduction(vector<string> const& expr) {
         }
         i++;
     }
+
+    for (int i = (int) axioms.size() - cntNewAxioms; i < (int) axioms.size(); i++) {
+        delete axioms[i];
+    }
+
+    cerr << "cntNewAxioms " << cntNewAxioms << endl;
+    axioms.erase(axioms.end() - cntNewAxioms, axioms.end());
 }

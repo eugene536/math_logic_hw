@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/eugene/2 course/math logic/math_logic/problem1/deduction.cpp
+deduction.h
+/home/eugene/2 course/math logic/math_logic/problem1/deduction.h
+
+/home/eugene/2 course/math logic/math_logic/problem1/deduction.h
+vector
+-
+string
+-
+

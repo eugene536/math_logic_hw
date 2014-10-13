@@ -135,6 +135,30 @@ checkOnFalse.cpp.s:
 	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/checkOnFalse.cpp.s
 .PHONY : checkOnFalse.cpp.s
 
+deduction.o: deduction.cpp.o
+.PHONY : deduction.o
+
+# target to build an object file
+deduction.cpp.o:
+	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/deduction.cpp.o
+.PHONY : deduction.cpp.o
+
+deduction.i: deduction.cpp.i
+.PHONY : deduction.i
+
+# target to preprocess a source file
+deduction.cpp.i:
+	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/deduction.cpp.i
+.PHONY : deduction.cpp.i
+
+deduction.s: deduction.cpp.s
+.PHONY : deduction.s
+
+# target to generate assembly for a file
+deduction.cpp.s:
+	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/deduction.cpp.s
+.PHONY : deduction.cpp.s
+
 main.o: main.cpp.o
 .PHONY : main.o
 
@@ -195,6 +219,9 @@ help:
 	@echo "... checkOnFalse.o"
 	@echo "... checkOnFalse.i"
 	@echo "... checkOnFalse.s"
+	@echo "... deduction.o"
+	@echo "... deduction.i"
+	@echo "... deduction.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
