@@ -1,0 +1,34 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/eugene/2 course/math logic/math_logic/task3/checkOnFalse.cpp
+checkOnFalse.h
+/home/eugene/2 course/math logic/math_logic/task3/checkOnFalse.h
+
+/home/eugene/2 course/math logic/math_logic/task3/checkOnFalse.h
+iostream
+-
+vector
+-
+parser.h
+/home/eugene/2 course/math logic/math_logic/task3/parser.h
+
+/home/eugene/2 course/math logic/math_logic/task3/main.cpp
+checkOnFalse.h
+/home/eugene/2 course/math logic/math_logic/task3/checkOnFalse.h
+string.h
+-
+fstream
+-
+
+/home/eugene/2 course/math logic/math_logic/task3/parser.h
+string
+-
+unordered_map
+-
+

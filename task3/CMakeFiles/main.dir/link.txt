@@ -1,0 +1,1 @@
+/usr/bin/c++    -Wall -std=c++11 -pedantic -O3 -DDEBUG -Wextra -Wno-unused-result    CMakeFiles/main.dir/main.cpp.o CMakeFiles/main.dir/parser.cpp.o CMakeFiles/main.dir/checkOnFalse.cpp.o  -o main -rdynamic -lgmp -lgmpxx -lpthread 
