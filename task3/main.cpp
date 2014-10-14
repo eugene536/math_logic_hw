@@ -1,5 +1,6 @@
 #include "checkOnFalse.h"
 #include "deduction.h"
+#include <ctime>
 
 using namespace std;
 string s;
@@ -12,6 +13,7 @@ deduction mainDeduction;
 vector<string> const expr;
 
 int main() {
+    double start = clock();
     ios_base::sync_with_stdio(false);
 
     #ifdef DEBUG
@@ -25,21 +27,16 @@ int main() {
         return 0;
     }
 
-    expression = main_parser.parse(s);
-    if (!checkOnFalse(expression)) {
+    if (!checkOnFalse(main_parser.parse(s))) {
         return 0;
     }
 
     cerr << "TRUE" << endl;
 
-    for (int i = 0; i < (int) proof.size(); i++) {
-        for (int j = 0; j < (int) proof[i].size(); j++) {
-            cout << proof[i][j] << endl;
-        }    
-        cout << endl << endl;
-    }
 
     delete expression;
     file.close();
+    double end = clock();
+    cerr << (end - start) / CLOCKS_PER_SEC << endl;
     return 0;
 }

@@ -85,18 +85,17 @@ deduction::~deduction() {
     }
 }
 
-void deduction::doDeduction(vector<string> const& expr) { 
+//change const& on &
+void deduction::doDeduction(vector<string>& expressions) { 
     std::vector<std::string> history;
     std::string exprAfterDeduction;
-    int i = 0;
     s = "";
     curExpr = 0;
     result.clear();
-    expressions.clear();
     forest.clear();
     f = false;
 
-    lastContext = expr[curExpr++];
+    lastContext = expressions[curExpr++];
     int turniketPos = lastContext.find("|-");
     int commaPos = 0;
     int cntNewAxioms = 0;
@@ -112,23 +111,25 @@ void deduction::doDeduction(vector<string> const& expr) {
     }
 
     if (!s.length()) { // if expr is without context
-        result = expr;
+        result = expressions;
         return;
     }
 
     exprAfterDeduction = lastContext.substr(0, commaPos);
     resultProofExpr = lastContext.substr(turniketPos + 2);
     if (exprAfterDeduction.size()) { // if Context != "" 
-        exprAfterDeduction += "|-(" + s + ")->" + resultProofExpr;
+        exprAfterDeduction += "|-" + resultProofExpr;
         result.push_back(exprAfterDeduction); // .push_back(newContext without lastContext)
     }
     lastContext = "(" + s + ")";
-    result.push_back("");
-    expressions = expr;
+
+    //cerr << expressions[0] << endl;
     for (int i = 1; i < (int) expressions.size(); i++) {
         expressions[i] = "(" + expressions[i] + ")";
     }
 
+    int i = 0;
+    //cerr << "size" << expressions.size() << endl;
     for (;curExpr < (int) expressions.size(); curExpr++) {
         s = expressions[curExpr];
 
@@ -137,35 +138,32 @@ void deduction::doDeduction(vector<string> const& expr) {
 
         int nAxiom = isAxiom(forest[i]);
         if (nAxiom) {
-            result[r_sz] = s;
-            result.push_back("");
-
-            result[r_sz] = s + "->" + lastContext + "->" + s;
-            result.push_back("");
-
-            result[r_sz] = lastContext + "->" + s;
-            result.push_back("");
+            result.push_back(s);
+            result.push_back(s + "->" + lastContext + "->" + s);
+            result.push_back(lastContext + "->" + s);
         } else { // MP
+            //cerr << "str--" << s << "---str" << endl;
+            //cerr << i << "startDoDed1 : " << forest[i] << "  " << forest.size() << endl;
+
             long long curHash = forest[i]->hash;
+
+            //cerr << "startDoDed2" << endl;
             long long leftNewHash = 0;
             bool flag = false;
             for (int j = i - 1; j >= 0 && !flag; j--) {
                 if (forest[j]->right && forest[j]->right->hash == curHash) {
                     leftNewHash = forest[j]->left->hash;
                     for (int z = i - 1; z >= 0; z--) {
-                        if (forest[z]->hash == leftNewHash) {
-                            flag = true;
-                            result[r_sz] = '(' + lastContext + "->" + history[z] + ")->";
+                            if (forest[z]->hash == leftNewHash) {
+                                flag = true;
+                            result.push_back('(' + lastContext + "->" + history[z] + ")->");
                             result[r_sz] += "(" + lastContext + "->" + history[z] + "->" + s + ")->";
                             result[r_sz] += lastContext + "->" + s;
-                            result.push_back("");
 
-                            result[r_sz] = "(" + lastContext + "->" + history[z] + "->" + s + ")->";
+                            result.push_back("(" + lastContext + "->" + history[z] + "->" + s + ")->");
                             result[r_sz] += lastContext + "->" + s;
-                            result.push_back("");
 
-                            result[r_sz] = lastContext + "->" + s;
-                            result.push_back("");
+                            result.push_back(lastContext + "->" + s);
                             break;
                         }
                     }
@@ -176,27 +174,22 @@ void deduction::doDeduction(vector<string> const& expr) {
             //a -> a
             if (!flag) {
                 // a->a->a
-                result[r_sz] = lastContext + "->" + lastContext + "->" + lastContext;
-                result.push_back("");
+                result.push_back(lastContext + "->" + lastContext + "->" + lastContext);
 
                 //aks 2
-                result[r_sz] = "(" + lastContext + "->" + lastContext + "->" + lastContext + ")->";
+                result.push_back("(" + lastContext + "->" + lastContext + "->" + lastContext + ")->");
                 result[r_sz] += "(" + lastContext + "->" + "(" + lastContext + "->" + lastContext + ")->" + lastContext + ")->";
                 result[r_sz] += lastContext + "->" + lastContext;
-                result.push_back("");
 
                 //MP
-                result[r_sz] = "(" + lastContext + "->" + "(" + lastContext + "->" + lastContext + ")->" + lastContext + ")->";
+                result.push_back("(" + lastContext + "->" + "(" + lastContext + "->" + lastContext + ")->" + lastContext + ")->");
                 result[r_sz] += lastContext + "->" + lastContext;
-                result.push_back("");
 
                 // aks 1
-                result[r_sz] = "(" + lastContext + "->" + "(" + lastContext + "->" + lastContext + ")->" + lastContext + ")" ;
-                result.push_back("");
+                result.push_back("(" + lastContext + "->" + "(" + lastContext + "->" + lastContext + ")->" + lastContext + ")" );
 
                 //MP
-                result[r_sz] = lastContext + "->" + lastContext;
-                result.push_back("");
+                result.push_back(lastContext + "->" + lastContext);
             }
         }
         i++;
@@ -206,6 +199,6 @@ void deduction::doDeduction(vector<string> const& expr) {
         delete axioms[i];
     }
 
-    cerr << "cntNewAxioms " << cntNewAxioms << endl;
     axioms.erase(axioms.end() - cntNewAxioms, axioms.end());
+                        //cerr << "endDoDed" << endl;
 }

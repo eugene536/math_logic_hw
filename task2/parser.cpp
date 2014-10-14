@@ -76,6 +76,7 @@ void parser::nextLexem() {
             if (good(it) && s[it] == '>') {
                 curLexem = Entailment;        
             } else {
+                cerr << s << endl;
                 throw runtime_error("unexpected token on position" + to_string(it));
             }
         break;
@@ -90,6 +91,7 @@ void parser::nextLexem() {
                 it--;
                 curLexem = Variable;        
             } else {
+                cerr << s << endl;
                 throw runtime_error("unexpected token on position" + to_string(it));
             }
         break;

@@ -6,23 +6,11 @@
 
 #IncludeRegexTransform: 
 
-/home/eugene/2 course/math logic/math_logic/task2/deduction.cpp
-deduction.h
-/home/eugene/2 course/math logic/math_logic/task2/deduction.h
+/home/eugene/2 course/math logic/math_logic/task2/parser.cpp
 iostream
--
-
-/home/eugene/2 course/math logic/math_logic/task2/deduction.h
-vector
 -
 parser.h
 /home/eugene/2 course/math logic/math_logic/task2/parser.h
-
-/home/eugene/2 course/math logic/math_logic/task2/main.cpp
-iostream
--
-deduction.h
-/home/eugene/2 course/math logic/math_logic/task2/deduction.h
 
 /home/eugene/2 course/math logic/math_logic/task2/parser.h
 string

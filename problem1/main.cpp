@@ -3,9 +3,10 @@
 using namespace std;
 
 deduction mainDeduction;
-vector<string> const expr;
+vector<string> expr;
 
 int main() {
+    expr.push_back("asdf")
     mainDeduction.doDeduction(expr);
     return 0;
 }

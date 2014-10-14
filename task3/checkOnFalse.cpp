@@ -33,6 +33,7 @@ void readLemms(string path, int cnt, char binOp) {
         temp[z].push_back(s);
     }
 
+
     for (int i = 0; i < cnt; i++)
         lemms14[binOp][i] = temp[i]; 
     file.close();
@@ -49,6 +50,8 @@ void init() {
         file.open("axioms/aOrNota", ifstream::in);
         string s;
         while (getline(file, s)) {
+            if (!s.length())
+                continue;
             aOrNota.push_back(s);
         }
     } catch(...) {
@@ -73,9 +76,9 @@ void modifiedStrings(vector<string> const from, vector<string>* to, string const
     for (int i = 0; i < (int) from.size(); i++) {
         for (int j = 0; j < (int) from[i].size(); j++) {
             if (from[i][j] == 'A') {
-                (*to)[i + offset] += left;
+                (*to)[i + offset] += "(" + left + ")";
             } else if (from[i][j] == 'B')  {
-                (*to)[i + offset] += right;
+                (*to)[i + offset] += "(" + right + ")";
             } else {
                 (*to)[i + offset].push_back(from[i][j]);
             }
@@ -92,19 +95,34 @@ void setModifiedLemms(char binOp, int offset, string const& left, string const& 
     modifiedStrings(curLemms, &proof[lst], left, right, prevProofSize);
 }
 
+void print(int x ) {
+    cout << "=" << endl;
+    for (auto it : proof[x]) {
+        cout << it << endl;
+    }
+    cout << "=" << endl;
+    //cout << proof[x][0] << endl;
+}
+int numOfVar;
 // WAR: do common context of 2 last proof
 void mergeModifiedLemms() {
-    cerr << "curPer" << curPermut << endl;
     int lst = proof.size() - 2;
-    int numOfVar = (int) (log(curPermut - lst + 1) / log(2));
-
-    cerr << "log():" << curPermut - lst + 1 << endl;
-    cerr << "var.size():" << variables.size() << endl;
+    
     string lastVarFromContext = variables[variables.size() - numOfVar];
-    cerr << "lastVarFromContext:" << lastVarFromContext << endl;
-    cerr << "resultProofExpr" << resultProofExpr << endl;
 
-    proof[lst].insert(proof[lst].end(), proof.back().begin(), proof.back().end());
+    main_deduction.doDeduction(proof.back());
+    proof.back() = main_deduction.result; 
+
+    main_deduction.doDeduction(proof[lst]);
+    proof[lst] = main_deduction.result; 
+
+    resultProofExpr = main_deduction.resultProofExpr;
+
+    if (curPermut == ((1 << variables.size()) - 1) && lst == 0) { //last step, deduction return result without context
+        proof[lst].insert(proof[lst].end(), proof.back().begin(), proof.back().end());
+    } else { // second result with context it's bad
+        proof[lst].insert(proof[lst].end(), proof.back().begin() + 1, proof.back().end());
+    }
     proof.pop_back();
 
     int offset = proof[lst].size();
@@ -144,8 +162,11 @@ bool getValue(parser::linkOnTree cur) {
         setModifiedLemms(cur->str[0], (leftVal << 1) + rightVal, cur->left->exprSubTree, cur->right->exprSubTree);
     }
 
-
     return (cur->valWholeTree = getBinOpValue(cur->str, leftVal, rightVal));
+}
+
+int lb(int x) {
+    return (int) (log(x) / log(2));
 }
 
 bool isValidity(parser::linkOnTree cur) {
@@ -155,8 +176,11 @@ bool isValidity(parser::linkOnTree cur) {
         curContext = "";
         //choose appropriate bits
         for (int j = 0; j < sz_v; j++) {
-            //badAnswer[variables[j]] = curPermut & (1 << j);
-            badAnswer[variables[j]] = curPermut == 0 ? 1 : 0;
+            badAnswer[variables[sz_v - j - 1]] = curPermut & (1 << j);
+        }
+
+        for (int j = 0; j < sz_v; j++) {
+            //badAnswer[variables[j]] = curPermut == 0 ? 1 : 0;
 
             //create newContext
             if (!badAnswer[variables[j]]) {
@@ -169,30 +193,21 @@ bool isValidity(parser::linkOnTree cur) {
                 curContext += "|-";
             }
         }
-        //cerr << "exprSubTree" << cur->exprSubTree << endl;
         curContext += cur->exprSubTree;
         proof.push_back(vector<string>(1));
         proof.back()[0] = curContext; 
 
-        //cerr << "proof.size()" << proof.size() << endl;
         f = getValue(cur);
         if (!f)
             return false;
 
-
-        main_deduction.doDeduction(proof.back());
-        //cerr << "end" << endl;
-        proof.back() = main_deduction.result; 
-
-        resultProofExpr = main_deduction.resultProofExpr;
-
-        if (curPermut && (curPermut & (curPermut - 1)) == 0) {
-            cerr << "merge" << endl;
-            mergeModifiedLemms();
+        numOfVar = 1;
+        for (int powTwo = 2; ((curPermut + 1) & (powTwo - 1)) == 0; powTwo <<= 1) {
+            mergeModifiedLemms(); 
+            numOfVar++;
         }
-
     }
-    return true;
+    return f;
 }
 
 //PRE: cur != NULL
@@ -214,8 +229,13 @@ bool checkOnFalse(parser::linkOnTree cur) {
     getVariables(cur);
     bool f = isValidity(cur);
     if (!f) {
+        cerr << "FAIL" << endl;
         for (auto it : variables)
             cout << it << " = " << badAnswer[it] << endl;
+    } else {
+        for (string it : proof[0]) {
+            cout << it << endl;
+        }    
     }
-    return f;
+    return true;
 }

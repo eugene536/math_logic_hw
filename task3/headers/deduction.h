@@ -7,7 +7,7 @@
 struct deduction {
     deduction();
     std::vector<std::string> result;
-    void doDeduction(std::vector<std::string> const&);
+    void doDeduction(std::vector<std::string>&);
     int sz();
     std::string resultProofExpr;
     ~deduction();
@@ -15,7 +15,6 @@ struct deduction {
 private:
     std::string s;
     std::string lastContext;
-    std::vector<std::string> expressions;
     std::vector<parser::linkOnTree> forest;
     std::vector<parser::linkOnTree> axioms;
     std::unordered_map<std::string, long long> axiomToHash;

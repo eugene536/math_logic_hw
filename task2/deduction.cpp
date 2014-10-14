@@ -92,6 +92,7 @@ void deduction::doDeduction(vector<string> const& expr) {
     s = "";
     curExpr = 0;
     result.clear();
+    forest.clear();
     f = false;
 
     lastContext = expr[curExpr++];
