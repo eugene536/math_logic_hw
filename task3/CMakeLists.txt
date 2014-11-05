@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 project(PROOF)
 
-include_directories(${PROOF_SOURCE_DIR} headers)
+include_directories(${PROOF_SOURCE_DIR} headers axioms)
 
 set(SOURCE_EXE main.cpp
                parser.cpp

@@ -1,4 +1,3 @@
-#define _GLIBCXX_DEBUG
 #include "deduction.h"
 
 using namespace std;

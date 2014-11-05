@@ -6,8 +6,8 @@ bool deduction::good(int x) {
     return x >= 0 && x < (int) s.length();
 }
 
-std::string deduction::trimWhiteSpace(std::string const& s) {
-    std::string temp;
+string deduction::trimWhiteSpace(string const& s) {
+    string temp;
     for (auto c : s)
         if (!isspace(c))
             temp.push_back(c);
@@ -56,7 +56,7 @@ int deduction::isAxiom(parser::linkOnTree vertex) {
     return 0;
 }
 
-void deduction::output(std::string const& s1, std::string const& s2, std::string const& s3 = "") {
+void deduction::output(string const& s1, string const& s2, string const& s3 = "") {
     result[r_sz] = "(" + s1 + ")" + "->(" + s2 + ")";
     if (s3 != "") 
         result[r_sz] = "->(" + s1 + ")";
@@ -87,8 +87,8 @@ deduction::~deduction() {
 
 //change const& on &
 void deduction::doDeduction(vector<string>& expressions) { 
-    std::vector<std::string> history;
-    std::string exprAfterDeduction;
+    vector<string> history;
+    string exprAfterDeduction;
     s = "";
     curExpr = 0;
     result.clear();

@@ -11,7 +11,7 @@ set(SOURCE_EXE main.cpp
 add_executable(main ${SOURCE_EXE})
 
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -pedantic -O3 -DDEBUG -Wextra -Wno-unused-result")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -D_GLIBCXX_DEBUG -pedantic -O3 -DDEBUG -Wextra -Wno-unused-result")
   
 endif()
 

@@ -27,15 +27,13 @@ int main() {
         return 0;
     }
 
-    if (!checkOnFalse(main_parser.parse(s))) {
-        return 0;
-    }
-
-    cerr << "TRUE" << endl;
-
+    checkOnFalse(main_parser.parse(s));
 
     delete expression;
+    #ifdef DEBUG
     file.close();
+    #endif
+
     double end = clock();
     cerr << (end - start) / CLOCKS_PER_SEC << endl;
     return 0;

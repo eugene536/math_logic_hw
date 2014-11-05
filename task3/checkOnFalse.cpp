@@ -224,18 +224,23 @@ void getVariables(parser::linkOnTree cur) {
         getVariables(cur->right);
 }
 
-bool checkOnFalse(parser::linkOnTree cur) {
+void checkOnFalse(parser::linkOnTree cur) {
     init();
     getVariables(cur);
     bool f = isValidity(cur);
     if (!f) {
         cerr << "FAIL" << endl;
-        for (auto it : variables)
-            cout << it << " = " << badAnswer[it] << endl;
+        cout << "Высказывание ложно при ";
+        for (int i = 0; i < (int) variables.size(); i++) {
+            string it = variables[i];
+            cout << it << '=' << (badAnswer[it] ? "И" : "Л");
+
+            if (i != (int) variables.size() - 1)
+                cout << ", ";
+        }
     } else {
         for (string it : proof[0]) {
             cout << it << endl;
         }    
     }
-    return true;
 }

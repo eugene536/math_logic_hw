@@ -6,7 +6,7 @@ deduction mainDeduction;
 vector<string> expr;
 
 int main() {
-    expr.push_back("asdf")
+    expr.push_back("asdf");
     mainDeduction.doDeduction(expr);
     return 0;
 }

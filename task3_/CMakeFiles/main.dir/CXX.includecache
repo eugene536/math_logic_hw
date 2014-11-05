@@ -1,0 +1,26 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/eugene/2 course/math logic/math_logic/task3_/deduction.cpp
+deduction.h
+/home/eugene/2 course/math logic/math_logic/task3_/deduction.h
+iostream
+-
+
+headers/deduction.h
+vector
+-
+parser.h
+headers/parser.h
+
+headers/parser.h
+string
+-
+unordered_map
+-
+

@@ -4,7 +4,7 @@
 #include <string>
 
 struct deduction {
-    void doDeduction(std::vector<std::string>*);
+    void doDeduction(std::vector<std::string> const&);
 };
 #endif
 
