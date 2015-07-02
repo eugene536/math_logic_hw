@@ -103,6 +103,7 @@ void print(int x ) {
     cout << "=" << endl;
     //cout << proof[x][0] << endl;
 }
+
 int numOfVar;
 // WAR: do common context of 2 last proof
 void mergeModifiedLemms() {
@@ -169,6 +170,7 @@ int lb(int x) {
     return (int) (log(x) / log(2));
 }
 
+
 bool isValidity(parser::linkOnTree cur) {
     int sz_v = variables.size();
     bool f = true;
@@ -186,6 +188,7 @@ bool isValidity(parser::linkOnTree cur) {
             if (!badAnswer[variables[j]]) {
               curContext += "!";  
             }
+
             curContext += variables[j];
             if (j != sz_v - 1) {
                 curContext += ",";
@@ -239,6 +242,7 @@ void checkOnFalse(parser::linkOnTree cur) {
                 cout << ", ";
         }
     } else {
+        cerr << "OK" << endl;
         for (string it : proof[0]) {
             cout << it << endl;
         }    

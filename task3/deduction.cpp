@@ -1,5 +1,4 @@
 #include "deduction.h"
-#include <iostream>
 using namespace std;
 
 bool deduction::good(int x) {
@@ -63,16 +62,13 @@ void deduction::output(string const& s1, string const& s2, string const& s3 = ""
 }
 
 deduction::deduction() {
-    axioms.push_back(main_parser.parse("A->B->A"));
-    axioms.push_back(main_parser.parse("(A->B)->(A->B->C)->(A->C)"));
-    axioms.push_back(main_parser.parse("A->B->A&B"));
-    axioms.push_back(main_parser.parse("A&B->A"));
-    axioms.push_back(main_parser.parse("A&B->B"));
-    axioms.push_back(main_parser.parse("A->A|B"));
-    axioms.push_back(main_parser.parse("B->A|B"));
-    axioms.push_back(main_parser.parse("(A->C)->(B->C)->(A|B->C)"));
-    axioms.push_back(main_parser.parse("(A->B)->(A->!B)->!A"));
-    axioms.push_back(main_parser.parse("!!A->A"));
+    ifstream in("axioms/base_axioms");
+    if (!in)
+        throw runtime_error("Can't open file axioms/base_axioms");
+    string s;
+    while(in >> s)
+        axioms.push_back(main_parser.parse(s));
+    in.close();
 }
 
 deduction::~deduction() {

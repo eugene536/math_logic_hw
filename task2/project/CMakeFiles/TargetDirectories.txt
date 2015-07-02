@@ -1,1 +1,0 @@
-/home/eugene/2 course/math logic/math_logic/task2/project/CMakeFiles/main.dir

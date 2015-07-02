@@ -1,1 +1,0 @@
-/home/eugene/2 course/math logic/math_logic/problem2/CMakeFiles/main.dir
