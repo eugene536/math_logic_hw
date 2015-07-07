@@ -18,22 +18,22 @@ struct parser {
     linkOnTree parse(const std::string& s2);
     void print(linkOnTree);
 
-private:
+//private:
     enum Lexems {
         Begin, OpenBracket, CloseBracket, And, Or, Not, Entailment, Variable, End
     };
 
     Lexems curLexem;
     std::string var;
-    std::string s;
+    std::string expression;
     std::unordered_map<std::string, long long> axiomToHash;
     static const int maxLen = 1e4;
     long long qPow[maxLen];
     int it; 
 
-    long long q;
+    long long q = 3;
 
-    bool good(int const&); 
+    bool good(int); 
     char nextToken();
     void nextLexem();
     long long getHashStr(std::string const&);
@@ -44,5 +44,5 @@ private:
     linkOnTree disjunction();
     linkOnTree expr();
 };
-bool goodCharForVar(char const&);
+bool goodCharForVar(char);
 #endif

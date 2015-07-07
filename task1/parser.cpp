@@ -4,8 +4,8 @@ using namespace std;
 
 parser::parser() {
     q = 3;
-    parser::qPow[0] = 1;
-    for (int i = 1; i < maxLen; i++) {
+    qPow[0] = 1;
+    for (int i = 1; i < maxLen; ++i) {
         qPow[i] = qPow[i - 1] * q;
     }
 }
@@ -28,19 +28,19 @@ void parser::print(parser::linkOnTree t) {
     std::cerr << t->str << std::endl;
 }
 
-bool parser::good(int const& x) {
-    return x >= 0 && x < (int) s.length();
+bool parser::good(int x) {
+    return x >= 0 && x < (int) expression.length();
 }
 
-bool goodCharForVar(char const& x) {
+bool goodCharForVar(char x) {
     return (x >= 'A' && x <= 'Z') || (x >= '0' && x <= '9');
 }
 
 char parser::nextToken() {
     do {
        it++; 
-    } while(good(it) && isspace(s[it]));
-    return s[it];
+    } while(good(it) && isspace(expression[it]));
+    return expression[it];
 }
 
 void parser::nextLexem() {
@@ -50,7 +50,7 @@ void parser::nextLexem() {
         return;
     }
 
-    switch(s[it]) {
+    switch(expression[it]) {
         case '(':
             curLexem = OpenBracket;        
         break;
@@ -73,7 +73,7 @@ void parser::nextLexem() {
 
         case '-': // ->
             it++;
-            if (good(it) && s[it] == '>') {
+            if (good(it) && expression[it] == '>') {
                 curLexem = Entailment;        
             } else {
                 throw runtime_error("unexpected token on position" + to_string(it));
@@ -81,11 +81,10 @@ void parser::nextLexem() {
         break;
 
         default:
-            if (s[it] >= 'A' && s[it] <= 'Z') {
-                var = "";
-                while (good(it) && goodCharForVar(s[it])) {
-                   var.push_back(s[it]); 
-                   it++;
+            if (expression[it] >= 'A' && expression[it] <= 'Z') {
+                var.clear();
+                for (;good(it) && goodCharForVar(expression[it]); ++it) {
+                   var.push_back(expression[it]); 
                 } 
                 it--;
                 curLexem = Variable;        
@@ -96,17 +95,20 @@ void parser::nextLexem() {
     } 
 }
 
-long long parser::getHashStr(string const& s) {
+long long parser::getHashStr(string const& str) {
     long long temp = 0;
-    for (int i = 0; i < (int) s.length(); i++) {
-        temp += qPow[i] * s[i];
+    for (int i = 0; i < (int) str.length(); ++i) {
+        temp += qPow[i] * str[i];
     }
     return temp;
 }
 
-parser::linkOnTree parser::updateVertex(linkOnTree vertex, linkOnTree left, linkOnTree right, string const& str) {
-    if (!vertex) 
+parser::linkOnTree parser::updateVertex(linkOnTree vertex, linkOnTree left, 
+                                        linkOnTree right, string const& str) 
+{
+    if (!vertex) { 
         return left;
+    }
     vertex->right = right;
     vertex->left = left;
     vertex->str = str;
@@ -117,18 +119,33 @@ parser::linkOnTree parser::updateVertex(linkOnTree vertex, linkOnTree left, link
     int rhash = (vertex->right) ? vertex->right->hash : 0; 
     int lhash = (vertex->left) ? vertex->left->hash : 0; 
 
-    vertex->size = lsize + rsize + 1;
-    vertex->hash = lhash + qPow[lsize] * (getHashStr(str) + rhash * q);
+    // new hash = hash( `(` + ltree + `)` + str + `(` + rtree + `)` )
+    vertex->hash = 0;
+    size_t cur_len = 0;
+    if (lsize) {
+        vertex->hash = '(' + q * lhash + ')' * qPow[lsize + 1]; // `(` + ltree + `)`
+        cur_len = lsize + 2;
+    }
+
+    vertex->hash += getHashStr(str) * qPow[cur_len]; // str + `(`
+    cur_len += str.length();
+
+    if (rsize) {
+        vertex->hash += ('(' + rhash * q + ')' * qPow[rsize + 1]) * qPow[cur_len];
+        cur_len += rsize + 2;
+    }
+    vertex->size = cur_len;
+
     return vertex;
 }
 
-// not
+// !
 parser::linkOnTree parser::nigation() { 
     linkOnTree vertex = NULL;
     if (curLexem == Not) {
         vertex = new Tree;
         nextLexem();
-        updateVertex(vertex, nigation(), NULL, "!");
+        updateVertex(vertex, NULL, nigation(), "!");
     } else if(curLexem == Variable) {
         vertex = new Tree;
         nextLexem();
@@ -185,9 +202,9 @@ parser::linkOnTree parser::expr() {
     return updateVertex(vertex, left, right, "->");
 }
 
-parser::linkOnTree parser::parse(const string& s2) {
+parser::linkOnTree parser::parse(const string& expression) {
     curLexem = Begin;
-    s = s2;
+    this->expression = expression;
     it = -1; 
     nextLexem(); 
     return expr();

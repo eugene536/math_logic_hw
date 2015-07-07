@@ -8,28 +8,21 @@
 
 using namespace std;
 
-string var;
-
-string s;
 vector<parser::linkOnTree> forest;
 vector<parser::linkOnTree> axioms;
-unordered_map<string, long long> axiomToHash;
-int it; 
+unordered_map<string, long long> hashedVars;
 
-bool f;
-
-string trimWhiteSpace(string const& s) {
-    string temp;
-    for (auto c : s) {
+void printWithoutSpaces(string const& expr) {
+    for (auto c : expr) {
         if (!isspace(c)) {
-            temp.push_back(c);
+            cout << c;
         }
     }
-    return temp;
 }
 
-void output(int n, string const& s, int flag, int x = 0, int y = 0) {
-    cout << "(" << n + 1 << ") " << trimWhiteSpace(s); 
+void output(int counter, string const& expr, int flag, int x = -1, int y = -1) {
+    cout << "(" << counter + 1 << ") ";
+    printWithoutSpaces(expr); 
     if (flag == 0)
         cout << " (Сх. акс. " << x << ")";
     else if (flag == 1)
@@ -40,50 +33,50 @@ void output(int n, string const& s, int flag, int x = 0, int y = 0) {
 }
 
 
-void itIsAxiom(parser::linkOnTree vertex, parser::linkOnTree axiom) {
-    if (!axiom || !vertex) {
-        if (axiom || vertex) 
-            f = false;
-        return;
+bool itIsAxiom(parser::linkOnTree vertex, parser::linkOnTree axiom) {
+    if (axiom == NULL || vertex == NULL) {
+        if (axiom == vertex) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     if (goodCharForVar(axiom->str[0])) {
-        if (axiomToHash.count(axiom->str)) {
-            if (axiomToHash[axiom->str] != vertex->hash) {
-                f = false;
+        if (hashedVars.count(axiom->str)) {
+            if (hashedVars[axiom->str] != vertex->hash) {
+                return false;
             }
         } else {
-            axiomToHash[axiom->str] = vertex->hash;
+            hashedVars[axiom->str] = vertex->hash;
         }
     } else if (axiom->str == vertex->str) {
-        itIsAxiom(vertex->left, axiom->left); 
-        itIsAxiom(vertex->right, axiom->right); 
+        return itIsAxiom(vertex->left, axiom->left) && 
+               itIsAxiom(vertex->right, axiom->right); 
     } else {
-        f = false;
-        return;
+        return false;
     }
+    return true;
 }
 
-int isAxiom(parser::linkOnTree vertex) {
+bool isAxiom(parser::linkOnTree vertex, int counter, const string& cur_expr) {
     for (int i = 0; i < (int) axioms.size(); i++)  {
-        axiomToHash.clear();
-        f = true;
-        itIsAxiom(vertex, axioms[i]);
-        if (f) {
-            return i + 1;
+        hashedVars.clear();
+        if (itIsAxiom(vertex, axioms[i])) {
+            output(counter, cur_expr, 0, i + 1);
+            return true;
         }
     }
-    return 0;
+    return false;
 }
 
-
-parser main_parser;
 int main() {
     #ifdef DEBUG
     freopen("in", "r", stdin);
     freopen("out", "w", stdout);
     #endif
 
+    parser main_parser;
     axioms.push_back(main_parser.parse("A -> B -> A"));
     axioms.push_back(main_parser.parse("(A -> B) -> (A -> B -> C) -> (A -> C)"));
     axioms.push_back(main_parser.parse("A -> B -> A & B"));
@@ -96,36 +89,36 @@ int main() {
     axioms.push_back(main_parser.parse("!!A -> A"));
 
 
-    int i = 0;
-    while (getline(cin, s)) {
-        if (!s.length())
+    string cur_expr;
+    for (int counter = 0; getline(cin, cur_expr); ++counter) {
+        if (cur_expr.length() == 0) {
             continue;
-        forest.push_back(main_parser.parse(s));
-        int nAxiom = isAxiom(forest[i]);
-        if (nAxiom) {
-            output(i, s, 0, nAxiom);
-        } else {
-            long long curHash = forest[i]->hash;
+        }
+        forest.push_back(main_parser.parse(cur_expr));
+        if (!isAxiom(forest.back(), counter, cur_expr)) {
+            long long curHash = forest.back()->hash;
             long long leftNewHash = 0;
             bool flag = false;
-            for (int j = i - 1; j >= 0 && !flag; j--) {
-                if (forest[j]->right && forest[j]->right->hash == curHash) {
+            for (int j = counter - 1; j >= 0 && !flag; --j) {
+                if (forest[j]->right && forest[j]->str == "->" && 
+                    forest[j]->right->hash == curHash) 
+                {
                     leftNewHash = forest[j]->left->hash;
-                    for (int z = i - 1; z >= 0; z--) {
+                    for (int z = counter - 1; z >= 0; --z) {
                         if (forest[z]->hash == leftNewHash) {
                             flag = true;
-                            output(i, s, 1, z, j);
+                            output(counter, cur_expr, 1, z, j);
                             break;
                         }
                     }
                 }
             }
+
             if (!flag) {
-                output(i, s, 2);
+                output(counter, cur_expr, 2);
                 return 0;
             }
         }
-        i++;
     }
 
     return 0;

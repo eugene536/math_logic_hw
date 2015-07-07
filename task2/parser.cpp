@@ -119,8 +119,23 @@ parser::linkOnTree parser::updateVertex(linkOnTree vertex, linkOnTree left, link
     int rhash = (vertex->right) ? vertex->right->hash : 0; 
     int lhash = (vertex->left) ? vertex->left->hash : 0; 
 
-    vertex->size = lsize + rsize + 1;
-    vertex->hash = lhash + qPow[lsize] * (getHashStr(str) + rhash * q);
+    // new hash = hash( `(` + ltree + `)` + str + `(` + rtree + `)` )
+    vertex->hash = 0;
+    size_t cur_len = 0;
+    if (lsize) {
+        vertex->hash = '(' + q * lhash + ')' * qPow[lsize + 1]; // `(` + ltree + `)`
+        cur_len = lsize + 2;
+    }
+
+    vertex->hash += getHashStr(str) * qPow[cur_len]; // str + `(`
+    cur_len += str.length();
+
+    if (rsize) {
+        vertex->hash += ('(' + rhash * q + ')' * qPow[rsize + 1]) * qPow[cur_len];
+        cur_len += rsize + 2;
+    }
+    vertex->size = cur_len;
+
     return vertex;
 }
 
