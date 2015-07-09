@@ -69,7 +69,7 @@ bool getBinOpValue(string s, bool x, bool y) {
     else if (s == "->")
         return !x | y;
     else //if (s == "!")
-        return !x;
+        return !y;
 }
 
 void modifiedStrings(vector<string> const from, vector<string>* to, string const& left, string const& right, int offset) {
@@ -158,7 +158,7 @@ bool getValue(parser::linkOnTree cur) {
     bool leftVal = getValue(cur->left);
     bool rightVal = getValue(cur->right);
     if (cur->str == "!") {
-        setModifiedLemms('!', leftVal, cur->left->exprSubTree, "q");
+        setModifiedLemms('!', rightVal, cur->right->exprSubTree, "q");
     } else {
         setModifiedLemms(cur->str[0], (leftVal << 1) + rightVal, cur->left->exprSubTree, cur->right->exprSubTree);
     }
@@ -215,6 +215,8 @@ bool isValidity(parser::linkOnTree cur) {
 
 //PRE: cur != NULL
 void getVariables(parser::linkOnTree cur) {
+    if (!cur) return;
+
     if (!cur->left && !cur->right) {
         if (badAnswer.count(cur->str) == 0) {
             badAnswer[cur->str] = 0;
@@ -223,8 +225,7 @@ void getVariables(parser::linkOnTree cur) {
         return;
     }
     getVariables(cur->left);
-    if (cur->right)
-        getVariables(cur->right);
+    getVariables(cur->right);
 }
 
 void checkOnFalse(parser::linkOnTree cur) {
