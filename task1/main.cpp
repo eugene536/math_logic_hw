@@ -96,16 +96,15 @@ int main() {
         }
         forest.push_back(main_parser.parse(cur_expr));
         if (!isAxiom(forest.back(), counter, cur_expr)) {
-            long long curHash = forest.back()->hash;
-            long long leftNewHash = 0;
+            parser::Tree const& lastExpr = *forest.back();
             bool flag = false;
             for (int j = counter - 1; j >= 0 && !flag; --j) {
                 if (forest[j]->right && forest[j]->str == "->" && 
-                    forest[j]->right->hash == curHash) 
+                    *forest[j]->right == lastExpr) 
                 {
-                    leftNewHash = forest[j]->left->hash;
+                    parser::Tree const& leftTree = *forest[j]->left;
                     for (int z = counter - 1; z >= 0; --z) {
-                        if (forest[z]->hash == leftNewHash) {
+                        if (*forest[z] == leftTree) {
                             flag = true;
                             output(counter, cur_expr, 1, z, j);
                             break;

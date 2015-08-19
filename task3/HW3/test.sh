@@ -12,6 +12,6 @@ else
     cp main ../HW3
     cd ../HW3
     cd ../../task1/HW1/ && ./test.sh build && cd ../../task3/HW3
-    cat $1 && echo -ne "\n\n" && cat $1 | ./main 2> /dev/null | ../../task1/HW1/task1 | tail -n 5 | less
+    cat $1 && echo -ne "\n\n" && cat $1 | ./main | ../../task1/HW1/main > log && vim log
 fi
 

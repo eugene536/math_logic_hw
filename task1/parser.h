@@ -14,11 +14,12 @@ struct parser {
         Tree();
         ~Tree();
     };
+
     typedef Tree* linkOnTree;
     linkOnTree parse(const std::string& s2);
     void print(linkOnTree);
 
-//private:
+private:
     enum Lexems {
         Begin, OpenBracket, CloseBracket, And, Or, Not, Entailment, Variable, End
     };
@@ -43,6 +44,10 @@ struct parser {
     linkOnTree conjunction();
     linkOnTree disjunction();
     linkOnTree expr();
+
+    friend bool operator==(const Tree& fst, const Tree& scd);
 };
 bool goodCharForVar(char);
+
+bool operator==(const parser::Tree& fst, const parser::Tree& scd);
 #endif

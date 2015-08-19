@@ -10,12 +10,12 @@ parser::parser() {
     }
 }
 
-parser::Tree::Tree(){
+parser::Tree::Tree() {
     left = right = NULL;
     hash = size = 0;
 }
 
-parser::Tree::~Tree(){
+parser::Tree::~Tree() {
     delete left;
     delete right;
 }
@@ -208,4 +208,17 @@ parser::linkOnTree parser::parse(const string& expression) {
     it = -1; 
     nextLexem(); 
     return expr();
+}
+
+namespace {
+    bool equals(const parser::Tree* fst, const parser::Tree* scd) {
+        if (fst == scd) return true;
+        if (fst->str != scd->str || fst->hash != scd->hash) return false;
+        return equals(fst->left, scd->left) && equals(fst->right, scd->right);
+    }
+}
+
+bool operator==(const parser::Tree& fst, const parser::Tree& scd) 
+{
+    return equals(&fst, &scd);
 }
