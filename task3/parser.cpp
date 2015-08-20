@@ -20,10 +20,6 @@ parser::Tree::~Tree() {
     delete right;
 }
 
-// WTF why proggram doesn't work without this destructor ??? 
-parser::~parser() {
-}
-
 void parser::print(parser::linkOnTree t) {
     if (t == NULL) 
         return;
@@ -32,11 +28,11 @@ void parser::print(parser::linkOnTree t) {
     std::cerr << t->str << std::endl;
 }
 
-bool parser::good(int const& x) {
+bool parser::good(int x) {
     return x >= 0 && x < (int) s.length();
 }
 
-bool goodCharForVar(char const& x) {
+bool goodCharForVar(char x) {
     return (x >= 'A' && x <= 'Z') || (x >= '0' && x <= '9');
 }
 
@@ -215,4 +211,28 @@ parser::linkOnTree parser::parse(const string& s2) {
     it = -1; 
     nextLexem(); 
     return expr();
+}
+
+
+namespace {
+    bool equals(const parser::Tree* fst, const parser::Tree* scd) {
+        if (!fst && !scd) {
+            return true;
+        } if (!fst || !scd) {
+            return false;
+        }
+
+        if (fst->str != scd->str || fst->hash != scd->hash) return false;
+        return equals(fst->left, scd->left) && equals(fst->right, scd->right);
+    }
+}
+
+bool operator==(const parser::Tree& fst, const parser::Tree& scd) 
+{
+    if (&fst == &scd) return true;
+    return equals(&fst, &scd);
+}
+
+bool operator!=(const parser::Tree& fst, const parser::Tree& scd) {
+   return !(fst == scd);
 }

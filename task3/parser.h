@@ -5,7 +5,6 @@
 
 struct parser {
     parser();
-    ~parser();
     struct Tree {
         Tree();
         std::string str;
@@ -36,7 +35,7 @@ private:
     long long q;
     long long qPow[maxLen];
 
-    bool good(int const&); 
+    bool good(int); 
     char nextToken();
     void nextLexem();
     long long getHashStr(std::string const&);
@@ -46,6 +45,11 @@ private:
     linkOnTree conjunction();
     linkOnTree disjunction();
     linkOnTree expr();
+    friend bool operator==(const Tree& fst, const Tree& scd);
+    friend bool operator!=(const Tree& fst, const Tree& scd);
 };
-bool goodCharForVar(char const&);
+bool goodCharForVar(char);
+
+bool operator==(const parser::Tree& fst, const parser::Tree& scd);
+bool operator!=(const parser::Tree& fst, const parser::Tree& scd);
 #endif

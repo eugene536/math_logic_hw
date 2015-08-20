@@ -17,7 +17,6 @@ int main() {
     parser main_parser;
     double start = clock();
 
-    deduction mainDeduction;
     vector<string> const expr;
 
     string s;
