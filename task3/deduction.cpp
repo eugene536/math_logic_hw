@@ -28,12 +28,13 @@ bool deduction::itIsAxiom(parser::linkOnTree vertex, parser::linkOnTree axiom) {
         if (isContext()) {
             return axiom->str == vertex->str;
         } else if (axiomToHash.count(axiom->str)) {
-            return axiomToHash[axiom->str] == vertex->str;
+            return *axiomToHash[axiom->str] == *vertex;
         } else {
-            axiomToHash[axiom->str] = vertex->str;
+            axiomToHash[axiom->str] = vertex;
+            return true;
         }
     } else if (axiom->str == vertex->str) {
-        return itIsAxiom(vertex->left, axiom->left) &&
+        return itIsAxiom(vertex->left, axiom->left) && 
                itIsAxiom(vertex->right, axiom->right); 
     }
 
@@ -45,7 +46,7 @@ int deduction::isAxiom(parser::linkOnTree vertex) {
         axiomToHash.clear();
         if (itIsAxiom(vertex, axioms[curAxiom])) {
             return curAxiom + 1;
-        }
+        } 
     }
     return 0;
 }
@@ -122,15 +123,19 @@ void deduction::doDeduction(vector<string>& expressions) {
     //cerr << "size" << expressions.size() << endl;
     for (;curExpr < (int) expressions.size(); curExpr++) {
         s = expressions[curExpr];
+        //cerr << curExpr - 1 << ": " << s;
 
         history.push_back(s);
         forest.push_back(main_parser.parse(s));
 
         int nAxiom = isAxiom(forest[i]);
+        //cerr << nAxiom << endl;
         if (nAxiom) {
+            //cerr << "axiom: " << result.size() << endl;
             result.push_back(s);
             result.push_back(s + "->" + lastContext + "->" + s);
             result.push_back(lastContext + "->" + s);
+            //cerr << "axiom: " << result.size() << endl;
         } else { // MP
             //cerr << "str--" << s << "---str" << endl;
             //cerr << i << "startDoDed1 : " << forest[i] << "  " << forest.size() << endl;
@@ -140,11 +145,12 @@ void deduction::doDeduction(vector<string>& expressions) {
             //cerr << "startDoDed2" << endl;
             bool flag = false;
             for (int j = i - 1; j >= 0 && !flag; j--) {
-                if (forest[j]->right && *forest[j]->right == lastExpr) {
+                if (forest[j]->right && forest[j]->str == "->" && *forest[j]->right == lastExpr) {
                     const parser::Tree& leftNewExpr = *forest[j]->left;
                     for (int z = i - 1; z >= 0; z--) {
                             if (*forest[z] == leftNewExpr) {
                                 flag = true;
+                            //cerr << "MP: " << result.size() << " pos: " << i << "; from: " << j << "; to: " << z << endl;
                             result.push_back('(' + lastContext + "->" + history[z] + ")->");
                             result[r_sz] += "(" + lastContext + "->" + history[z] + "->" + s + ")->";
                             result[r_sz] += lastContext + "->" + s;
@@ -162,6 +168,7 @@ void deduction::doDeduction(vector<string>& expressions) {
             //!MP
             //a -> a
             if (!flag) {
+                //cerr << "a->a: " << " " << result.size() << endl;
                 // a->a->a
                 result.push_back(lastContext + "->" + lastContext + "->" + lastContext);
 

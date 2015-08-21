@@ -1,5 +1,6 @@
 #include <iostream>
 #include "parser.h"
+#include <queue>
 using namespace std;
 
 parser::parser() {
@@ -15,24 +16,41 @@ parser::Tree::Tree(){
     hash = size = 0;
 }
 
-parser::Tree::~Tree(){
+parser::Tree::~Tree() {
     delete left;
     delete right;
 }
 
 void parser::print(parser::linkOnTree t) {
-    if (t == NULL) 
-        return;
-    print(t->left);
-    print(t->right);
-    std::cerr << t->str << std::endl;
+    queue<pair<parser::linkOnTree, int>> q;
+    q.push({t, 0});
+
+    int k = 0;
+    while (!q.empty()) {
+        while (q.front().second == k) {
+            parser::linkOnTree ver = q.front().first;
+
+            cerr << ver->str << " ";
+            if (ver->left != NULL) {
+                q.push({ver->left, k + 1});
+            }
+
+            if (ver->right != NULL) {
+                q.push({ver->right, k + 1});
+            }
+
+            q.pop();
+        }
+        cerr << endl;
+        k++;
+    }
 }
 
-bool parser::good(int const& x) {
+bool parser::good(int x) {
     return x >= 0 && x < (int) s.length();
 }
 
-bool goodCharForVar(char const& x) {
+bool goodCharForVar(char x) {
     return (x >= 'A' && x <= 'Z') || (x >= '0' && x <= '9');
 }
 
@@ -76,7 +94,7 @@ void parser::nextLexem() {
             if (good(it) && s[it] == '>') {
                 curLexem = Entailment;        
             } else {
-                cerr << s << endl;
+                //cerr << s << endl;
                 throw runtime_error("unexpected token on position" + to_string(it));
             }
         break;
@@ -91,7 +109,7 @@ void parser::nextLexem() {
                 it--;
                 curLexem = Variable;        
             } else {
-                cerr << s << endl;
+                //cerr << s << endl;
                 throw runtime_error("unexpected token on position" + to_string(it));
             }
         break;
@@ -136,6 +154,9 @@ parser::linkOnTree parser::updateVertex(linkOnTree vertex, linkOnTree left, link
     }
     vertex->size = cur_len;
 
+    string lSubStr = (vertex->left) ? "(" + vertex->left->exprSubTree + ")" : "";
+    string rSubStr = (vertex->right) ?  "(" + vertex->right->exprSubTree + ")" : "";
+    vertex->exprSubTree = lSubStr + str + rSubStr;
     return vertex;
 }
 
@@ -145,7 +166,7 @@ parser::linkOnTree parser::nigation() {
     if (curLexem == Not) {
         vertex = new Tree;
         nextLexem();
-        updateVertex(vertex, nigation(), NULL, "!");
+        updateVertex(vertex, NULL, nigation(), "!");
     } else if(curLexem == Variable) {
         vertex = new Tree;
         nextLexem();
@@ -155,7 +176,7 @@ parser::linkOnTree parser::nigation() {
         vertex = expr();
 
         if (curLexem != CloseBracket) {
-            throw runtime_error("expected ) on position" + to_string(it));    
+            throw runtime_error("expected ) on position" + to_string(it) + "\n" + s);    
         } else {
             nextLexem();
         }
@@ -208,4 +229,28 @@ parser::linkOnTree parser::parse(const string& s2) {
     it = -1; 
     nextLexem(); 
     return expr();
+}
+
+
+namespace {
+    bool equals(const parser::Tree* fst, const parser::Tree* scd) {
+        if (!fst && !scd) {
+            return true;
+        } if (!fst || !scd) {
+            return false;
+        }
+
+        if (fst->str != scd->str || fst->hash != scd->hash) return false;
+        return equals(fst->left, scd->left) && equals(fst->right, scd->right);
+    }
+}
+
+bool operator==(const parser::Tree& fst, const parser::Tree& scd) 
+{
+    if (&fst == &scd) return true;
+    return equals(&fst, &scd);
+}
+
+bool operator!=(const parser::Tree& fst, const parser::Tree& scd) {
+   return !(fst == scd);
 }

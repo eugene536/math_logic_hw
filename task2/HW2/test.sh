@@ -11,6 +11,9 @@ else
     cmake ../ && make
     cp main ../HW2
     cd ../HW2
-    cat $1 | ./main | less
+    if [ "$1" != "build" ]
+    then
+        cat $1 | ./main > res && vim res
+    fi
 fi
 

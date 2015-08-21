@@ -19,7 +19,7 @@ private:
     std::string lastContext;
     std::vector<parser::linkOnTree> forest;
     std::vector<parser::linkOnTree> axioms;
-    std::unordered_map<std::string, std::string> axiomToHash;
+    std::unordered_map<std::string, parser::linkOnTree> axiomToHash;
     int curExpr;
     int curAxiom;
     parser main_parser;
