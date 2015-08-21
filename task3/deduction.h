@@ -19,10 +19,9 @@ private:
     std::string lastContext;
     std::vector<parser::linkOnTree> forest;
     std::vector<parser::linkOnTree> axioms;
-    std::unordered_map<std::string, long long> axiomToHash;
+    std::unordered_map<std::string, parser::linkOnTree> axiomToHash;
     int curExpr;
     int curAxiom;
-    bool f;
     parser main_parser;
 
     std::string trimWhiteSpace(std::string const&); 
@@ -30,7 +29,7 @@ private:
     bool isContext();
     void output(std::string const&, std::string const&, std::string const& s3);
 
-    void itIsAxiom(parser::linkOnTree, parser::linkOnTree);
+    bool itIsAxiom(parser::linkOnTree, parser::linkOnTree);
     int isAxiom(parser::linkOnTree);
 };
 #endif
