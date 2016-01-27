@@ -32,35 +32,32 @@ void output(int counter, string const& expr, int flag, int x = -1, int y = -1) {
     cout << endl;
 }
 
+std::unordered_map<std::string, parser::linkOnTree> axiomToHash;
 
 bool itIsAxiom(parser::linkOnTree vertex, parser::linkOnTree axiom) {
-    if (axiom == NULL || vertex == NULL) {
-        if (axiom == vertex) {
-            return true;
-        } else {
-            return false;
-        }
-    }
+    if (!axiom && !vertex) {
+        return true;
+    } else if (!axiom || !vertex) {
+        return false;
+    } 
 
     if (goodCharForVar(axiom->str[0])) {
-        if (hashedVars.count(axiom->str)) {
-            if (hashedVars[axiom->str] != vertex->hash) {
-                return false;
-            }
+        if (axiomToHash.count(axiom->str)) {
+            return *axiomToHash[axiom->str] == *vertex;
         } else {
-            hashedVars[axiom->str] = vertex->hash;
+            axiomToHash[axiom->str] = vertex;
+            return true;
         }
     } else if (axiom->str == vertex->str) {
         return itIsAxiom(vertex->left, axiom->left) && 
                itIsAxiom(vertex->right, axiom->right); 
-    } else {
-        return false;
     }
-    return true;
-}
 
+    return false;
+}
 bool isAxiom(parser::linkOnTree vertex, int counter, const string& cur_expr) {
     for (int i = 0; i < (int) axioms.size(); i++)  {
+        axiomToHash.clear();
         hashedVars.clear();
         if (itIsAxiom(vertex, axioms[i])) {
             output(counter, cur_expr, 0, i + 1);

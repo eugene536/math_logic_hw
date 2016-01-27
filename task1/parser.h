@@ -6,15 +6,16 @@
 struct parser {
     parser();
     struct Tree {
+        Tree();
         std::string str;
+        std::string exprSubTree;
         long long hash;
         int size;
+        bool valWholeTree;
         Tree* left;
         Tree* right;
-        Tree();
         ~Tree();
     };
-
     typedef Tree* linkOnTree;
     linkOnTree parse(const std::string& s2);
     void print(linkOnTree);
@@ -26,13 +27,13 @@ private:
 
     Lexems curLexem;
     std::string var;
-    std::string expression;
+    std::string s;
     std::unordered_map<std::string, long long> axiomToHash;
-    static const int maxLen = 1e4;
-    long long qPow[maxLen];
     int it; 
 
-    long long q = 3;
+    static const int maxLen = 1e4;
+    long long q;
+    long long qPow[maxLen];
 
     bool good(int); 
     char nextToken();
@@ -44,10 +45,11 @@ private:
     linkOnTree conjunction();
     linkOnTree disjunction();
     linkOnTree expr();
-
     friend bool operator==(const Tree& fst, const Tree& scd);
+    friend bool operator!=(const Tree& fst, const Tree& scd);
 };
 bool goodCharForVar(char);
 
 bool operator==(const parser::Tree& fst, const parser::Tree& scd);
+bool operator!=(const parser::Tree& fst, const parser::Tree& scd);
 #endif
