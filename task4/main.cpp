@@ -1,99 +1,169 @@
+#define BOOST_SPIRIT_DEBUG
 #define BOOST_SPIRIT_USE_PHOENIX_V3
+#define BOOST_RESULT_OF_USE_DECLTYPE
 
 #include <boost/config/warning_disable.hpp>
-#include <boost/spirit/include/karma.hpp>
+
+#include <boost/spirit/include/qi.hpp>
+#include <boost/spirit/include/phoenix_core.hpp>
+#include <boost/spirit/include/phoenix_operator.hpp>
+#include <boost/spirit/include/phoenix_fusion.hpp>
+#include <boost/spirit/include/phoenix_stl.hpp>
+#include <boost/spirit/include/phoenix_object.hpp>
+#include <boost/phoenix/bind/bind_function_object.hpp>
+#include <boost/phoenix/bind/bind_function.hpp>
+
+#include <boost/fusion/adapted/struct/adapt_struct.hpp>
+#include <boost/fusion/include/adapt_struct.hpp>
+
+#include <boost/variant/recursive_variant.hpp>
+#include <boost/foreach.hpp>
+
+#include <boost/lambda/lambda.hpp>
+#include <boost/lambda/construct.hpp>
 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
-#include <cstdlib>
-#include <ctime>
 
-namespace karma = boost::spirit::karma;
+namespace qi = boost::spirit::qi;
+namespace ascii = boost::spirit::ascii;
+namespace ph = boost::phoenix;
+namespace args = ph::arg_names;
+namespace lam = boost::lambda;
 
-namespace client
+typedef std::string::iterator Iterator;
+struct arithm_gram
+      : qi::grammar<Iterator, void(), ascii::space_type>
 {
-    ///////////////////////////////////////////////////////////////////////////
-    //  Our matrix generator
-    ///////////////////////////////////////////////////////////////////////////
-    //[tutorial_karma_nummatrix_grammar
-    template <typename OutputIterator>
-    struct matrix_grammar 
-      : karma::grammar<OutputIterator, std::vector<std::vector<int> >()>
+    arithm_gram()
+        : arithm_gram::base_type(expr)
     {
-        matrix_grammar()
-          : matrix_grammar::base_type(matrix)
-        {
-            using karma::int_;
-            using karma::right_align;
-            using karma::eol;
+        using qi::_val;
+        using qi::_1;
+        using qi::_2;
 
-            element = right_align(10)[int_];
-            row = '|' << *element << '|';
-            matrix = row % eol;
-        }
+        using ph::construct;
+        using ph::val;
 
-        karma::rule<OutputIterator, std::vector<std::vector<int> >()> matrix;
-        karma::rule<OutputIterator, std::vector<int>()> row;
-        karma::rule<OutputIterator, int()> element;
-    };
-    //]
+        using namespace qi;
 
-    //[tutorial_karma_nummatrix
-    template <typename OutputIterator>
-    bool generate_matrix(OutputIterator& sink
-      , std::vector<std::vector<int> > const& v)
-    {
-        matrix_grammar<OutputIterator> matrix;
-        return karma::generate(
-            sink,                           // destination: output iterator
-            matrix,                         // the generator
-            v                               // the data to output 
+        expr = 
+            disj
+            >> *("->" >> disj);
+
+        disj = 
+            conj
+            >> *('|' >> conj);
+
+        conj = 
+            unar
+            >> *('&' >> unar);
+
+        unar =
+            pred
+            | '!' >> unar
+            | '(' >> expr > ')'
+            | '@' >> var >> unar
+            | '?' >> var >> unar;
+
+        var = 
+            char_("a-z") 
+            >> *char_("0-9");
+
+        pred = 
+              char_("A-Z") >> 
+              *char_("0-9") >> 
+              -('(' >> term >> *(',' >> term) > ')')
+            | term >> '=' >> term;
+
+        term = 
+            add 
+            >> *('+' >> add);
+
+        add = 
+            mult
+            >> *('*' >> mult);
+
+        mult = 
+            (char_("a-z") 
+             >> *char_("0-9")
+             >> '(' >> term >> *(',' >> term) > ')'
+             | var
+             | '(' >> term > ')'
+             | char_('0')
+            ) >> *char_('\'');
+
+        expr.name("expr");
+        disj.name("disj");
+        conj.name("conj");
+        unar.name("unar");
+        var.name("var");
+        pred.name("pred");
+        term.name("term");
+        add.name("add");
+        mult.name("mult");
+
+        on_error<fail>
+        (
+            expr
+          , std::cerr
+                << val("Error! Expecting ")
+                << _4                               // what failed?
+                << val(" here: \"")
+                << construct<std::string>(_3, _2)   // iterators to error-pos, end
+                << val("\"")
+                << std::endl
         );
+
+        debug(expr);
+        debug(disj);
+        debug(conj);
+        debug(unar);
+        debug(var);
+        debug(pred);
+        debug(term);
+        debug(add);
+        debug(mult);
     }
-    //]
+
+    template<typename T>
+    using rule = qi::rule<Iterator, T(), ascii::space_type>;
+
+    typedef rule<void> v_rule;
+
+    v_rule expr;
+    v_rule disj;
+    v_rule conj;
+    v_rule unar;
+    v_rule var;
+    v_rule pred;
+    v_rule term;
+    v_rule add;
+    v_rule mult;
+};
+
+int parse(std::ifstream& in) {
+    std::string storage; 
+    getline(in, storage);
+
+    std::cerr << "expr: " << storage << std::endl;
+    arithm_gram gram;
+    auto it = storage.begin();
+    bool r = phrase_parse(it, storage.end(), gram, ascii::space);
+    std::cerr << "r = " << r << std::endl;
+    std::cerr << "unparsed: " << std::string(it, storage.end()) << std::endl;
+
+    return r && it == storage.end();    
 }
 
-////////////////////////////////////////////////////////////////////////////
-//  Main program
-////////////////////////////////////////////////////////////////////////////
-int
-main()
-{
-    std::cout << "/////////////////////////////////////////////////////////\n\n";
-    std::cout << "\tPrinting integers in a matrix using Spirit...\n\n";
-    std::cout << "/////////////////////////////////////////////////////////\n\n";
 
-    // here we put the data to generate
-    std::vector<std::vector<int> > v;
-
-    // now, generate the size and the contents for the matrix
-    std::srand((unsigned int)std::time(NULL));
-    std::size_t rows = std::rand() / (RAND_MAX / 10);
-    std::size_t columns = std::rand() / (RAND_MAX / 10);
-
-    v.resize(rows);
-    for (std::size_t row = 0; row < rows; ++row)
-    {
-        v[row].resize(columns);
-        std::generate(v[row].begin(), v[row].end(), std::rand);
-    }
-
-    // ok, we got the matrix, now print it out
-    std::string generated;
-    std::back_insert_iterator<std::string> sink(generated);
-    if (!client::generate_matrix(sink, v))
-    {
-        std::cout << "-------------------------\n";
-        std::cout << "Generating failed\n";
-        std::cout << "-------------------------\n";
-    }
-    else
-    {
-        std::cout << "-------------------------\n";
-        std::cout << "Generated:\n" << generated << "\n";
-        std::cout << "-------------------------\n";
-    }
+int main() {
+    freopen("log", "w", stderr);
+    std::ifstream in("in");
+    int res = parse(in);
+    std::cerr << "result: " << res << std::endl;
 
     return 0;
 }
