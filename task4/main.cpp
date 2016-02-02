@@ -153,7 +153,7 @@ int parse(std::ifstream& in) {
     auto it = storage.begin();
     bool r = phrase_parse(it, storage.end(), gram, ascii::space);
     std::cerr << "r = " << r << std::endl;
-    std::cerr << "unparsed: " << std::string(it, storage.end()) << std::endl;
+    std::cerr << "unparse: " << std::string(it, storage.end()) << std::endl;
 
     return r && it == storage.end();    
 }
