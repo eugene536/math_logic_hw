@@ -27,6 +27,8 @@
 #include <string>
 #include <vector>
 
+#include "tree.h"
+
 namespace qi = boost::spirit::qi;
 namespace ascii = boost::spirit::ascii;
 namespace ph = boost::phoenix;
@@ -51,7 +53,7 @@ struct arithm_gram
 
         expr = 
             disj
-            >> *("->" >> disj);
+            | disj >> "->" >> expr;
 
         disj = 
             conj
@@ -64,18 +66,18 @@ struct arithm_gram
         unar =
             pred
             | '!' >> unar
-            | '(' >> expr > ')'
+            | ('(' >> expr) > ')'
             | '@' >> var >> unar
             | '?' >> var >> unar;
 
-        var = 
+        var %= 
             char_("a-z") 
             >> *char_("0-9");
 
         pred = 
               char_("A-Z") >> 
               *char_("0-9") >> 
-              -('(' >> term >> *(',' >> term) > ')')
+              -(('(' >> term >> *(',' >> term)) > ')')
             | term >> '=' >> term;
 
         term = 
@@ -87,12 +89,11 @@ struct arithm_gram
             >> *('*' >> mult);
 
         mult = 
-            (char_("a-z") 
-             >> *char_("0-9")
-             >> '(' >> term >> *(',' >> term) > ')'
-             | var
-             | '(' >> term > ')'
-             | char_('0')
+            (var                                          [_val = ph::new_<Tree>(_1)]
+             >> (('(' >> term >> *(',' >> term)) > ')')
+             | var                                        [_val = ph::new_<Tree>(_1)]
+             | ((lit('(') >> term) > lit(')'))            [_val = ph::new_<Tree>(_1)]
+             | char_('0')                                 [_val = ph::new_<Tree>("0")]
             ) >> *char_('\'');
 
         expr.name("expr");
@@ -117,15 +118,15 @@ struct arithm_gram
                 << std::endl
         );
 
-        debug(expr);
-        debug(disj);
-        debug(conj);
-        debug(unar);
-        debug(var);
-        debug(pred);
-        debug(term);
-        debug(add);
-        debug(mult);
+        //debug(expr);
+        //debug(disj);
+        //debug(conj);
+        //debug(unar);
+        //debug(var);
+        //debug(pred);
+        //debug(term);
+        //debug(add);
+        //debug(mult);
     }
 
     template<typename T>
@@ -137,11 +138,11 @@ struct arithm_gram
     v_rule disj;
     v_rule conj;
     v_rule unar;
-    v_rule var;
+    rule<std::string> var;
     v_rule pred;
     v_rule term;
     v_rule add;
-    v_rule mult;
+    rule<Tree*> mult;
 };
 
 int parse(std::ifstream& in) {
