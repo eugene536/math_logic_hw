@@ -16,11 +16,10 @@
 #include <boost/fusion/adapted/struct/adapt_struct.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
 
-#include <boost/variant/recursive_variant.hpp>
-#include <boost/foreach.hpp>
-
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/construct.hpp>
+
+#include <boost/phoenix/object/new.hpp>
 
 #include <iostream>
 #include <fstream>
@@ -37,11 +36,9 @@ namespace lam = boost::lambda;
 
 typedef std::string::iterator Iterator;
 struct arithm_gram
-      : qi::grammar<Iterator, void(), ascii::space_type>
-{
+: qi::grammar<Iterator, Tree*(), ascii::space_type> {
     arithm_gram()
-        : arithm_gram::base_type(expr)
-    {
+        : arithm_gram::base_type(expr) {
         using qi::_val;
         using qi::_1;
         using qi::_2;
@@ -51,50 +48,71 @@ struct arithm_gram
 
         using namespace qi;
 
-        expr = 
-            disj
-            | disj >> "->" >> expr;
+        expr =
+            disj                                   [_val = _1]
+            | (disj >> "->" >> expr)               [_val = ph::new_<Tree>("->", _1, _2)];
 
-        disj = 
-            conj
-            >> *('|' >> conj);
+        disj =
+            (
+                conj                               [_a = _1]
+                >> *('|' >> conj                   [_a = ph::new_<Tree>("|", _a, _1)])
+            )                                      [_val = _a];
 
-        conj = 
-            unar
-            >> *('&' >> unar);
+        conj =
+            (
+                unar                               [_a = _1]
+                >> *('&' >> unar                   [_a = ph::new_<Tree>("&", _a, _1)])
+            )                                      [_val = _a];
+
 
         unar =
-            pred
-            | '!' >> unar
-            | ('(' >> expr) > ')'
-            | '@' >> var >> unar
-            | '?' >> var >> unar;
+            pred                                   [_val = _1]
+            | '!' >> unar                          [_val = ph::new_<Tree>("!", _1)]
+            | ('(' >> expr > ')')                  [_val = _1]
+            | ('@' >> var >> unar)                 [_val = ph::new_<Tree>("@", _1, _2)]
+            | ('?' >> var >> unar)                 [_val = ph::new_<Tree>("?", _1, _2)];
 
-        var %= 
-            char_("a-z") 
+        var %=
+            char_("a-z")
             >> *char_("0-9");
 
-        pred = 
-              char_("A-Z") >> 
-              *char_("0-9") >> 
-              -(('(' >> term >> *(',' >> term)) > ')')
-            | term >> '=' >> term;
+        pred =
+            (
+                char_("A-Z") >>
+                *char_("0-9") >>
+                -('(' >> (term % ',') > ')')
+            )                                      [_val = ph::new_<Tree>(_1, _2, _3)]
+            | (term >> '=' >> term)                [_val = ph::new_<Tree>("=", _1, _2)];
 
-        term = 
-            add 
-            >> *('+' >> add);
+        term =
+            (
+                add                                [_a = _1]
+                >> *('+' >> add                    [_a = ph::new_<Tree>("+", _a, _1)])
+            )                                      [_val = _a];
 
-        add = 
-            mult
-            >> *('*' >> mult);
+        add =
+            (
+                mult                               [_a = _1]
+                >> *('*' >> mult                   [_a = ph::new_<Tree>("*", _a, _1)])
+            )                                      [_val = _a];
 
-        mult = 
-            (var                                          [_val = ph::new_<Tree>(_1)]
-             >> (('(' >> term >> *(',' >> term)) > ')')
-             | var                                        [_val = ph::new_<Tree>(_1)]
-             | ((lit('(') >> term) > lit(')'))            [_val = ph::new_<Tree>(_1)]
-             | char_('0')                                 [_val = ph::new_<Tree>("0")]
-            ) >> *char_('\'');
+        func =
+            (
+                var >> '(' >> (term % ',') > ')'
+            )                                      [_val = ph::new_<Tree>(_1, _2)];
+
+        zeroTree = char_('0')                      [_val = ph::new_<Tree>("0")];
+
+        varTree = var                              [_val = ph::new_<Tree>(_1)];
+
+        mult =
+            (
+                ((func                              [_val = _1])
+                   | ('(' >> term > ')')            [_val = _1]
+                   | varTree                        [_val = _1]
+                   | zeroTree                       [_val = _1]
+                ) >> *char_('\'')
+            )                                      [_val = ph::new_<Tree>(_2, _1)];
 
         expr.name("expr");
         disj.name("disj");
@@ -109,13 +127,13 @@ struct arithm_gram
         on_error<fail>
         (
             expr
-          , std::cerr
-                << val("Error! Expecting ")
-                << _4                               // what failed?
-                << val(" here: \"")
-                << construct<std::string>(_3, _2)   // iterators to error-pos, end
-                << val("\"")
-                << std::endl
+            , std::cerr
+            << val("Error! Expecting ")
+            << _4                               // what failed?
+            << val(" here: \"")
+            << construct<std::string>(_3, _2)   // iterators to error-pos, end
+            << val("\"")
+            << std::endl
         );
 
         //debug(expr);
@@ -132,21 +150,25 @@ struct arithm_gram
     template<typename T>
     using rule = qi::rule<Iterator, T(), ascii::space_type>;
 
-    typedef rule<void> v_rule;
+    template<typename T, typename U>
+    using rule_locals = qi::rule<Iterator, T(), qi::locals<U>, ascii::space_type>;
 
-    v_rule expr;
-    v_rule disj;
-    v_rule conj;
-    v_rule unar;
+    rule<Tree *> expr;
+    rule_locals<Tree *, Tree *> disj;
+    rule_locals<Tree *, Tree *> conj;
+    rule<Tree *> unar;
+    rule<Tree *> pred;
+    rule_locals<Tree *, Tree *> term;
+    rule_locals<Tree *, Tree *> add;
+    rule<Tree *> mult;
+    rule_locals<Tree *, std::string> func;
     rule<std::string> var;
-    v_rule pred;
-    v_rule term;
-    v_rule add;
-    rule<Tree*> mult;
+    rule<Tree *> varTree;
+    rule<Tree *> zeroTree;
 };
 
-int parse(std::ifstream& in) {
-    std::string storage; 
+int parse(std::ifstream &in) {
+    std::string storage;
     getline(in, storage);
 
     std::cerr << "expr: " << storage << std::endl;
@@ -156,7 +178,7 @@ int parse(std::ifstream& in) {
     std::cerr << "r = " << r << std::endl;
     std::cerr << "unparse: " << std::string(it, storage.end()) << std::endl;
 
-    return r && it == storage.end();    
+    return r && it == storage.end();
 }
 
 
@@ -168,3 +190,4 @@ int main() {
 
     return 0;
 }
+
