@@ -1,3 +1,4 @@
+#include <cassert>
 #include "tree.h"
 
 Tree::Tree(const std::string &tag, const std::vector<Tree *> children)
@@ -15,11 +16,37 @@ Tree::Tree(const std::vector<char>& tag, Tree* child)
     , children_{child}
 {}
 
+Tree::Tree(const std::string& tag, Tree* left, boost::optional<Tree*> right) 
+    : tag_(tag)
+{
+    assert(right);
+
+    children_.push_back(left);
+    children_.push_back(*right);
+}
+
 Tree::Tree(const char c, const std::vector<char> &tag, boost::optional<std::vector<Tree *> > opt)
 {
     tag_ = c + std::string(tag.begin(), tag.end());
     if (opt)
         children_ = *opt;
+}
+
+std::ostream& operator<<(std::ostream& out, const Tree* tree) {
+    out << "|" << tree->tag_ << "|";
+    for (Tree* child: tree->children_)
+        out << ", " << child->tag_;
+    return out;
+}
+
+void Tree::print(std::ostream& out, int depth) const {
+    for (int i = 0; i < depth * 2; ++i)
+        out << " ";
+
+    out << tag_ << "\n";
+    for (Tree* child: children_) {
+        child->print(out, depth + 1); 
+    }
 }
 
 
