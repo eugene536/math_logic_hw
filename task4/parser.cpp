@@ -48,37 +48,38 @@ namespace {
             using ph::construct;
             using ph::val;
             using ph::if_;
+            using ph::new_;
 
             using namespace qi;
 
             expr =
-                (disj >> -("->" >> expr))              [
-                                                         if_ (_2) [
-                                                            _val = ph::new_<Tree>("->", _1, _2)
-                                                         ] .else_ [
-                                                            _val = _1
-                                                         ]
-                                                       ];
+                (disj >> -("->" >> expr))            [
+                                                       if_ (_2) [
+                                                          _val = new_<Tree>("->", _1, _2)
+                                                       ] .else_ [
+                                                          _val = _1
+                                                       ]
+                                                     ];
 
             disj =
                 (
-                    conj                               [_a = _1]
-                    >> *('|' >> conj                   [_a = ph::new_<Tree>("|", _a, _1)])
-                )                                      [_val = _a];
+                    conj                             [_a = _1]
+                    >> *('|' >> conj                 [_a = new_<Tree>("|", _a, _1)])
+                )                                    [_val = _a];
 
             conj =
                 (
-                    unar                               [_a = _1]
-                    >> *('&' >> unar                   [_a = ph::new_<Tree>("&", _a, _1)])
-                )                                      [_val = _a];
+                    unar                             [_a = _1]
+                    >> *('&' >> unar                 [_a = new_<Tree>("&", _a, _1)])
+                )                                    [_val = _a];
 
 
             unar =
-                '!' >> unar                            [_val = ph::new_<Tree>("!", _1)]
-                | ('(' >> expr > ')')                  [_val = _1]
-                | ('@' >> var >> unar)                 [_val = ph::new_<Tree>("@", _1, _2)]
-                | ('?' >> var >> unar)                 [_val = ph::new_<Tree>("?", _1, _2)]
-                | pred                                 [_val = _1];
+                '!' >> unar                          [_val = new_<Tree>("!", _1)]
+                | ('(' >> expr > ')')                [_val = _1]
+                | ('@' >> var >> unar)               [_val = new_<Tree>("@", _1, _2)]
+                | ('?' >> var >> unar)               [_val = new_<Tree>("?", _1, _2)]
+                | pred                               [_val = _1];
 
             var %=
                 char_("a-z")
@@ -89,44 +90,44 @@ namespace {
                     char_("A-Z") >>
                     *char_("0-9") >>
                     -('(' >> (term % ',') > ')')
-                )                                      [_val = ph::new_<Tree>(_1, _2, _3)]
-                | (term >> '=' >> term)                [_val = ph::new_<Tree>("=", _1, _2)];
+                )                                    [_val = new_<Tree>(_1, _2, _3)]
+                | (term >> '=' >> term)              [_val = new_<Tree>("=", _1, _2)];
 
             term =
                 (
-                    add                                [_a = _1]
-                    >> *('+' >> add                    [_a = ph::new_<Tree>("+", _a, _1)])
-                )                                      [_val = _a];
+                    add                              [_a = _1]
+                    >> *('+' >> add                  [_a = new_<Tree>("+", _a, _1)])
+                )                                    [_val = _a];
 
             add =
                 (
-                    mult                               [_a = _1]
-                    >> *('*' >> mult                   [_a = ph::new_<Tree>("*", _a, _1)])
-                )                                      [_val = _a];
+                    mult                             [_a = _1]
+                    >> *('*' >> mult                 [_a = new_<Tree>("*", _a, _1)])
+                )                                    [_val = _a];
 
             func =
                 (
                     var >> '(' >> (term % ',') > ')'
-                )                                      [_val = ph::new_<Tree>(_1, _2)];
+                )                                    [_val = new_<Tree>(_1, _2)];
 
-            zeroTree = char_('0')                      [_val = ph::new_<Tree>("0")];
+            zeroTree = char_('0')                    [_val = new_<Tree>("0")];
 
-            varTree = var                              [_val = ph::new_<Tree>(_1)];
+            varTree = var                            [_val = new_<Tree>(_1)];
 
             mult =
                 (
-                    ((func                             [_val = _1])
-                       | ('(' >> term > ')')           [_val = _1]
-                       | varTree                       [_val = _1]
-                       | zeroTree                      [_val = _1]
+                    ((func                           [_val = _1])
+                       | ('(' >> term > ')')         [_val = _1]
+                       | varTree                     [_val = _1]
+                       | zeroTree                    [_val = _1]
                     ) >> *char_('\'')
-                )                                      [
-                                                         if_ (ph::size(_2)) [
-                                                             _val = ph::new_<Tree>(_2, _1)
-                                                         ] .else_ [
-                                                             _val = _1
-                                                         ]
-                                                       ];
+                )                                    [
+                                                       if_ (ph::size(_2)) [
+                                                           _val = new_<Tree>(_2, _1)
+                                                       ] .else_ [
+                                                           _val = _1
+                                                       ]
+                                                     ];
 
             expr.name("expr");
             disj.name("disj");
