@@ -36,7 +36,7 @@ namespace {
     namespace args = ph::arg_names;
     namespace lam = boost::lambda;
 
-    typedef std::string::iterator Iterator;
+    typedef std::string::const_iterator Iterator;
     struct FormalGrammar
     : qi::grammar<Iterator, Tree*(), ascii::space_type> {
         FormalGrammar(std::ostream& log)
@@ -183,7 +183,7 @@ namespace {
     };
 }
 
-Tree* parse(std::string expression, std::ostream& log) {
+Tree* parse(const std::string& expression, std::ostream& log) {
     FormalGrammar gram(log);
     auto it = expression.begin();
     Tree* res = nullptr;
@@ -192,8 +192,57 @@ Tree* parse(std::string expression, std::ostream& log) {
     if (it != expression.end())
         log << "unparse: " << std::string(it, expression.end()) << std::endl;
 
-    if (r && it == expression.end())
+    if (r && it == expression.end()) {
+        res->setExpr(expression);
         return res;
+    }
 
     return nullptr;
+}
+
+std::pair<std::vector<Tree*>, Tree*> parseHeader(const std::string& header, std::ostream& log) {
+    FormalGrammar gram(log);
+    std::vector<Tree*> context;
+
+    Tree* res;
+    auto beg = header.begin();
+    auto it = header.begin();
+    while (it != header.end()) {
+        res = nullptr;
+        beg = it;
+        bool r = phrase_parse(it, header.end(), gram, ascii::space, res);
+
+        if (!r) {
+            log << "unparse: " << std::string(beg, header.end()) << std::endl;
+            return {context, nullptr};
+        }
+
+        if (it == header.end())
+            break;
+
+        if (*it == ',' || *it == '|') {
+            res->setExpr(std::string(beg, it));
+            context.push_back(res);
+
+            if (*it++ == '|') {
+                if (it != header.end() && *it == '-') {
+                    ++it;
+                } else {
+                    log << "unparse: " << std::string(beg, header.end()) << std::endl;
+                    return {context, nullptr};
+                }
+            }
+        } else {
+            log << "unparse: " << std::string(beg, header.end()) << std::endl;
+            return {context, nullptr};
+        }
+    }
+
+    if (it == header.end()) {
+        res->setExpr(std::string(beg, it));
+        return {context, res};
+    } else
+        log << "unparse: " << std::string(beg, header.end()) << std::endl;
+
+    return {context, nullptr};
 }

@@ -16,7 +16,7 @@ class Deduction {
 public:
     Deduction(const std::string& path);
 
-    void doDeduction(const std::string& path);
+    void doDeduction(const std::string& out_path);
 
 //private:
     const std::string kPathResources = "resources";
@@ -63,9 +63,6 @@ public:
 
     static void getFreeVars(Tree* expr, std::unordered_set<std::string> &vars,
                             std::unordered_multiset<std::string>& bounded);
-
-    // return true if var is free inside expr
-    static bool isFree(Tree* expr, const std::string& var);
 
 private:
     std::ifstream in_;

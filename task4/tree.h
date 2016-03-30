@@ -31,6 +31,8 @@ public:
 
     bool operator!=(const Tree& oth) const;
 
+    void setExpr(const std::string &expr);
+
 private:
     void init();
 
@@ -48,6 +50,7 @@ private:
     int hash_;
     int len_;
 
+    std::string expr_;
     std::string tag_;
     std::vector<Tree*> children_;
 

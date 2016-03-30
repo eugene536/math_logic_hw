@@ -2,6 +2,7 @@
 #include "parser.h"
 
 #include <memory>
+#include <sstream>
 
 Deduction::Deduction(const std::string &path)
     : in_(kPathResources + "/" + path)
@@ -9,9 +10,22 @@ Deduction::Deduction(const std::string &path)
     init();
 }
 
-void Deduction::doDeduction(const std::string &path)
+void Deduction::doDeduction(const std::string &out_path)
 {
+    std::string header;
+    std::getline(in_, header);
 
+    std::vector<Tree*> context;
+    Tree* result;
+
+    std::ofstream log_("log");
+    std::tie(context, result) = parseHeader(header, log_);
+    assert(result);
+
+    for (Tree* c: context)
+        std::cerr << c << std::endl;
+
+    std::cerr << "result = " << result << std::endl;
 }
 
 void Deduction::init()
@@ -321,7 +335,6 @@ bool Deduction::isVar(Tree *expr)
     return 'a' <= f && f <= 'z' && (expr->children_.size() == 0);
 }
 
-// TODO: replace with getVars
 void Deduction::getFreeVars(Tree *expr, std::unordered_set<std::string> &vars,
                             std::unordered_multiset<std::string> &bounded)
 {
@@ -338,10 +351,5 @@ void Deduction::getFreeVars(Tree *expr, std::unordered_set<std::string> &vars,
 
     if (expr->tag_ == "@" || expr->tag_ == "?")
         bounded.erase(bounded.find(expr->children_[0]->tag_));
-}
-
-bool Deduction::isFree(Tree *expr, const std::string &var)
-{
-
 }
 

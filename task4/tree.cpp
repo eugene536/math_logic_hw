@@ -52,10 +52,8 @@ Tree::Tree(const char c, const std::vector<char> &tag, boost::optional<std::vect
 }
 
 std::ostream& operator<<(std::ostream& out, const Tree* tree) {
-    out << "|" << tree->tag_ << "|";
-    for (Tree* child: tree->children_)
-        out << ", " << child->tag_;
-    return out;
+    assert(!tree->expr_.empty());
+    return out << tree->expr_;
 }
 
 void Tree::print(std::ostream& out, int depth) const {
@@ -120,3 +118,7 @@ bool Tree::equals(const Tree *l, const Tree *r)
     return true;
 }
 
+void Tree::setExpr(const std::string &expr)
+{
+    expr_ = expr;
+}
