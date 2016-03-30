@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <sstream>
+#include <tuple>
 
 Deduction::Deduction(const std::string &path)
     : in_(kPathResources + "/" + path)
@@ -12,20 +13,89 @@ Deduction::Deduction(const std::string &path)
 
 void Deduction::doDeduction(const std::string &out_path)
 {
-    std::string header;
-    std::getline(in_, header);
+    using namespace std;
 
-    std::vector<Tree*> context;
+    string header;
+    getline(in_, header);
+
+    vector<Tree*> context;
     Tree* result;
 
-    std::ofstream log_("log");
+    ofstream log_("log");
     std::tie(context, result) = parseHeader(header, log_);
     assert(result);
 
-    for (Tree* c: context)
-        std::cerr << c << std::endl;
+    ostringstream out;
 
-    std::cerr << "result = " << result << std::endl;
+    bool needWork = context.size() != 0;
+    Tree* alpha = nullptr;
+    unordered_set<string> vars;
+    if (needWork) {
+        alpha = context.back();
+        context.pop_back();
+
+        unordered_multiset<string> unused;
+        getFreeVars(alpha, vars, unused);
+    }
+
+#define notNeedWork() \
+    if (!needWork) { \
+        out << alpha << endl; \
+        continue;\
+    }
+
+    string expr_s;
+    size_t cur_l = 2;
+    vector<Tree*> parsed;
+    while (getline(in_, expr_s)) {
+        Tree* expr = parse(expr_s);
+        parsed.push_back(expr);
+        assert(expr);
+
+        if (alpha != nullptr && *expr == *alpha) {
+            notNeedWork();
+            out << alpha << "->" << alpha << "->" << alpha << endl;
+
+            out << "(" << alpha << "->" << alpha << "->" << alpha << ")->"
+                << "(" << alpha << "->((" << alpha << "->" << alpha << ")->" << alpha << "))->"
+                << "(" << alpha << "->" << alpha << ")" << endl;
+
+            out << "(" << alpha << "->((" << alpha << "->" << alpha << ")->" << alpha << "))->"
+                << "(" << alpha << "->" << alpha << ")" << endl;
+
+            out << "(" << alpha << "->((" << alpha << "->" << alpha << ")->" << alpha << "))" << endl;
+
+            out << "(" << alpha << "->" << alpha << ")" << endl;
+        } else if (isAxiom(expr) ||
+                   isForallAxiom(expr) ||
+                   isExistAxiom(expr) ||
+                   isFormalAxiom(expr)) {
+            notNeedWork();
+            out << expr << "->" << alpha << "->" << expr << endl;
+            out << expr << endl;
+            out << alpha << "->" << expr << endl;
+        } else if (isMP(expr, parsed)) {
+            notNeedWork();
+            int i, j;
+            std::tie(i, j) = *isMP(expr, parsed);
+            out << "(" << alpha << "->" << parsed[i] << ")->"
+                   "(" << alpha << "->" << parsed[j] << ")->"
+                   "(" << alpha << "->" << expr << ")" << endl;
+
+            out << "(" << alpha << "->" << parsed[j] << ")->"
+                   "(" << alpha << "->" << expr << ")" << endl;
+
+            out << "(" << alpha << "->" << expr << ")" << endl;
+        } else if (isForallRule(expr, parsed) && vars.count(expr->children_[1]->children_[0]->tag_) == 0) {
+//            int i = *isForallRule(expr, parsed);
+
+
+        }
+
+        cur_l++;
+    }
+
+    ofstream(out_path) << out.str();
 }
 
 void Deduction::init()

@@ -53,7 +53,7 @@ Tree::Tree(const char c, const std::vector<char> &tag, boost::optional<std::vect
 
 std::ostream& operator<<(std::ostream& out, const Tree* tree) {
     assert(!tree->expr_.empty());
-    return out << tree->expr_;
+    return out << "(" << tree->expr_ << ")";
 }
 
 void Tree::print(std::ostream& out, int depth) const {
