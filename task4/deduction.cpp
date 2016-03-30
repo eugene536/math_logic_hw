@@ -67,6 +67,58 @@ boost::optional<std::pair<int, int>> Deduction::isMP(Tree* expr, const std::vect
     return boost::optional<std::pair<int, int>>();
 }
 
+boost::optional<int> Deduction::isForallRule(Tree *expr, const std::vector<Tree *> &context)
+{
+    // (phi) -> @x(psi), x is not free in phi
+    if (expr->tag_ == "->") {
+        Tree* phi = expr->children_[0]; // phi
+        Tree* psi = expr->children_[1]; // @x(psi)
+        if (psi->tag_ == "@") {
+            std::string var = psi->children_[0]->tag_; // x
+            psi = psi->children_[1]; // psi
+            std::unordered_set<std::string> vars;
+            std::unordered_multiset<std::string> unused;
+
+            getFreeVars(phi, vars, unused);
+
+            if (!vars.count(var)) { // var is not free in phi
+                std::unique_ptr<Tree> form(new Tree("->", phi, psi));// form := phi->psi
+                for (size_t i = 0; i < context.size(); ++i)
+                    if (*context[i] == *form)
+                        return boost::optional<int>(i);
+            }
+        }
+    }
+
+    return boost::optional<int>();
+}
+
+boost::optional<int> Deduction::isExistRule(Tree *expr, const std::vector<Tree *> &context)
+{
+    // ?x(psi) -> (phi), x is not free in phi
+    if (expr->tag_ == "->") {
+        Tree* psi = expr->children_[0]; // ?x(psi)
+        Tree* phi = expr->children_[1]; // phi
+        if (psi->tag_ == "?") {
+            std::string var = psi->children_[0]->tag_; // x
+            psi = psi->children_[1]; // psi
+            std::unordered_set<std::string> vars;
+            std::unordered_multiset<std::string> unused;
+
+            getFreeVars(phi, vars, unused);
+
+            if (!vars.count(var)) { // var is not free in phi
+                std::unique_ptr<Tree> form(new Tree("->", psi, phi));// form := psi->phi
+                for (size_t i = 0; i < context.size(); ++i)
+                    if (*context[i] == *form)
+                        return boost::optional<int>(i);
+            }
+        }
+    }
+
+    return boost::optional<int>();
+}
+
 bool Deduction::isAxiom(Tree *expr) const
 {
     assert(expr);

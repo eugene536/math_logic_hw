@@ -159,6 +159,58 @@ TEST(Deduction, isMP) {
     EXPECT_FALSE(deduction.isMP(parse("?aP(a)->(A->A->A)->P(b)"), context));
 }
 
+TEST(Deduction, isForallRule) {
+    std::vector<Tree*> context{
+                          parse("a=b->0'''''=0"),
+                          parse("P(b)->(A->A->A)->P(b)"),
+                          parse("(A->A->A)->P(b)"),
+                          parse("((A->A->A)->P(b))->P(a)->((A->A->A)->P(b))"),
+                          parse("P(a)->(A->A->A)"),
+                          parse("(P(a)->(A->A->A))->P(b)"),
+                          parse("A->A->A"),
+                          parse("P(b)"),
+                          parse("(a=b->0'''''=0)->@x?yP(x, y)"),
+                          parse("(@a(a = b) & ?a(a * b = c'') | P(x, y))->(A->A->A)"),
+                          parse("?aP(a)->(A->A->A)->P(b)")};
+
+    EXPECT_TRUE(deduction.isForallRule(parse("A->@x(A->A)"), context));
+    EXPECT_TRUE(deduction.isForallRule(parse("(A->A->A)->@bP(b)"), context));
+    EXPECT_TRUE(deduction.isForallRule(parse("?aP(a)->@b((A->A->A)->P(b))"), context));
+    EXPECT_TRUE(deduction.isForallRule(parse("?aP(a)->@a((A->A->A)->P(b))"), context));
+    EXPECT_TRUE(deduction.isForallRule(parse("P(a)->@b(A->A->A)"), context));
+    EXPECT_TRUE(deduction.isForallRule(parse("(@a(a = b) & ?a(a * b = c'') | P(x, y))->@a(A->A->A)"), context));
+
+    EXPECT_FALSE(deduction.isForallRule(parse("P(a)->@a(A->A->A)"), context));
+    EXPECT_FALSE(deduction.isForallRule(parse("P(a)->@b(A->A)"), context));
+    EXPECT_FALSE(deduction.isForallRule(parse("(@a(a = b) & ?a(a * b = c'') | P(x, y))->@x(A->A->A)"), context));
+    EXPECT_FALSE(deduction.isForallRule(parse("(@a(a = b) & ?a(a * b = c'') | P(x, y))->@b(A->A->A)"), context));
+    EXPECT_FALSE(deduction.isForallRule(parse("(@a(a = b) & ?a(a * b = c'') | P(x, y))->@c(A->A->A)"), context));
+}
+
+TEST(Deduction, isExistRule) {
+    std::vector<Tree*> context{
+                          parse("a=b->0'''''=0"),
+                          parse("P(b)->(A->A->A)->P(b)"),
+                          parse("(A->A->A)->P(b)"),
+                          parse("((A->A->A)->P(b))->P(a)->((A->A->A)->P(b))"),
+                          parse("P(a)->(A->A->A)"),
+                          parse("(P(a)->(A->A->A))->P(b)"),
+                          parse("A->A->A"),
+                          parse("P(b)"),
+                          parse("(a=b->0'''''=0)->@x?yP(x, y)"),
+                          parse("(@a(a = b) & ?a(a * b = c'') | P(x, y))->(A->A->A)"),
+                          parse("?aP(a)->(A->A->A)->P(b)")};
+
+    EXPECT_TRUE(deduction.isExistRule(parse("?a(A->A->A)->P(b)"), context));
+    EXPECT_TRUE(deduction.isExistRule(parse("?x(a=b->0'''''=0)->@x?yP(x, y)"), context));
+    EXPECT_TRUE(deduction.isExistRule(parse("?y(a=b->0'''''=0)->@x?yP(x, y)"), context));
+    EXPECT_TRUE(deduction.isExistRule(parse("?u(P(a)->(A->A->A))->P(b)"), context));
+
+    EXPECT_FALSE(deduction.isExistRule(parse("?u?x(P(a)->(A->A->A))->P(b)"), context));
+    EXPECT_FALSE(deduction.isExistRule(parse("?b(P(a)->(A->A->A))->P(b)"), context));
+    EXPECT_FALSE(deduction.isExistRule(parse("?b(A->A->A)->P(b)"), context));
+}
+
 
 int main(int argc, char **argv)
 {

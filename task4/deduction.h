@@ -32,6 +32,10 @@ public:
 
     static boost::optional<std::pair<int, int>> isMP(Tree* expr, const std::vector<Tree*>& context);
 
+    static boost::optional<int> isForallRule(Tree* expr, const std::vector<Tree*>& context);
+
+    static boost::optional<int> isExistRule(Tree* expr, const std::vector<Tree*>& context);
+
     bool isAxiom(Tree* expr) const;
 
     static bool isAxiomHelper(Tree* expr, Tree *axiom, std::unordered_map<char, Tree *> &m);
