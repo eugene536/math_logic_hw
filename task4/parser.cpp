@@ -39,7 +39,7 @@ namespace {
     typedef std::string::iterator Iterator;
     struct FormalGrammar
     : qi::grammar<Iterator, Tree*(), ascii::space_type> {
-        FormalGrammar()
+        FormalGrammar(std::ostream& log)
             : FormalGrammar::base_type(expr) {
             using qi::_val;
             using qi::_1;
@@ -77,8 +77,8 @@ namespace {
             unar =
                 '!' >> unar                          [_val = new_<Tree>("!", _1)]
                 | ('(' >> expr > ')')                [_val = _1]
-                | ('@' >> var >> unar)               [_val = new_<Tree>("@", _1, _2)]
-                | ('?' >> var >> unar)               [_val = new_<Tree>("?", _1, _2)]
+                | ('@' >> var >> unar)               [_val = new_<Tree>("@", new_<Tree>(_1), _2)]
+                | ('?' >> var >> unar)               [_val = new_<Tree>("?", new_<Tree>(_1), _2)]
                 | pred                               [_val = _1];
 
             var %=
@@ -116,18 +116,12 @@ namespace {
 
             mult =
                 (
-                    ((func                           [_val = _1])
-                       | ('(' >> term > ')')         [_val = _1]
-                       | varTree                     [_val = _1]
-                       | zeroTree                    [_val = _1]
-                    ) >> *char_('\'')
-                )                                    [
-                                                       if_ (ph::size(_2)) [
-                                                           _val = new_<Tree>(_2, _1)
-                                                       ] .else_ [
-                                                           _val = _1
-                                                       ]
-                                                     ];
+                    ((func                           [_a = _1])
+                       | ('(' >> term > ')')         [_a = _1]
+                       | varTree                     [_a = _1]
+                       | zeroTree                    [_a = _1]
+                    ) >> * (char_('\'')              [_a = new_<Tree>("'", _a)])
+                )                                    [_val = _a];
 
             expr.name("expr");
             disj.name("disj");
@@ -145,7 +139,7 @@ namespace {
             on_error<fail>
             (
                 expr
-                , std::cerr
+                , log
                 << val("Error! Expecting ")
                 << _4                               // what failed?
                 << val(" here: \"")
@@ -154,18 +148,18 @@ namespace {
                 << std::endl
             );
 
-            debug(expr);
-            debug(disj);
-            debug(conj);
-            debug(unar);
-            debug(var);
-            debug(pred);
-            debug(term);
-            debug(add);
-            debug(mult);
-            debug(zeroTree);
-            debug(varTree);
-            debug(func);
+//            debug(expr);
+//            debug(disj);
+//            debug(conj);
+//            debug(unar);
+//            debug(var);
+//            debug(pred);
+//            debug(term);
+//            debug(add);
+//            debug(mult);
+//            debug(zeroTree);
+//            debug(varTree);
+//            debug(func);
         }
 
         template<typename T>
@@ -181,7 +175,7 @@ namespace {
         rule<Tree *> pred;
         rule_locals<Tree *, Tree *> term;
         rule_locals<Tree *, Tree *> add;
-        rule<Tree *> mult;
+        rule_locals<Tree *, Tree *> mult;
         rule_locals<Tree *, std::string> func;
         rule<std::string> var;
         rule<Tree *> varTree;
@@ -189,14 +183,14 @@ namespace {
     };
 }
 
-Tree* parse(std::string expression) {
-    FormalGrammar gram;
+Tree* parse(std::string expression, std::ostream& log) {
+    FormalGrammar gram(log);
     auto it = expression.begin();
     Tree* res = nullptr;
     bool r = phrase_parse(it, expression.end(), gram, ascii::space, res);
 
     if (it != expression.end())
-        std::cerr << "unparse: " << std::string(it, expression.end()) << std::endl;
+        log << "unparse: " << std::string(it, expression.end()) << std::endl;
 
     if (r && it == expression.end())
         return res;
