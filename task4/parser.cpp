@@ -10,8 +10,6 @@
 #include <boost/spirit/include/phoenix_fusion.hpp>
 #include <boost/spirit/include/phoenix_stl.hpp>
 #include <boost/spirit/include/phoenix_object.hpp>
-#include <boost/phoenix/bind/bind_function_object.hpp>
-#include <boost/phoenix/bind/bind_function.hpp>
 
 #include <boost/fusion/adapted/struct/adapt_struct.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
@@ -19,8 +17,12 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/construct.hpp>
 
+#include <boost/phoenix/bind/bind_function_object.hpp>
+#include <boost/phoenix/bind/bind_function.hpp>
 #include <boost/phoenix/object/new.hpp>
 #include <boost/phoenix/statement/if.hpp>
+
+#include <boost/algorithm/string.hpp>
 
 #include <iostream>
 #include <fstream>
@@ -185,14 +187,14 @@ namespace {
 
 Tree* parse(const std::string& expression, std::ostream& log) {
     FormalGrammar gram(log);
-    auto it = expression.begin();
+    auto it = expression.cbegin();
     Tree* res = nullptr;
-    bool r = phrase_parse(it, expression.end(), gram, ascii::space, res);
+    bool r = phrase_parse(it, expression.cend(), gram, ascii::space, res);
 
-    if (it != expression.end())
-        log << "unparse: " << std::string(it, expression.end()) << std::endl;
+    if (it != expression.cend())
+        log << "unparse: " << std::string(it, expression.cend()) << std::endl;
 
-    if (r && it == expression.end()) {
+    if (r && it == expression.cend()) {
         res->setExpr(expression);
         return res;
     }
@@ -200,24 +202,37 @@ Tree* parse(const std::string& expression, std::ostream& log) {
     return nullptr;
 }
 
-std::pair<std::vector<Tree*>, Tree*> parseHeader(const std::string& header, std::ostream& log) {
+std::pair<std::vector<Tree*>, Tree*> parseHeader(std::string header, std::ostream& log) {
+    boost::algorithm::trim(header);
+
     FormalGrammar gram(log);
     std::vector<Tree*> context;
 
     Tree* res;
-    auto beg = header.begin();
-    auto it = header.begin();
-    while (it != header.end()) {
+    auto beg = header.cbegin();
+    auto it = header.cbegin();
+
+    if (*it == '|') { // if context is empty
+        it++;
+        if (it != header.cend() && *it == '-')
+            it++;
+        else {
+            log << "unparse: " << std::string(header.cbegin(), header.cend()) << std::endl;
+            return {context, nullptr};
+        }
+    }
+
+    while (it != header.cend()) {
         res = nullptr;
         beg = it;
-        bool r = phrase_parse(it, header.end(), gram, ascii::space, res);
+        bool r = phrase_parse(it, header.cend(), gram, ascii::space, res);
 
         if (!r) {
-            log << "unparse: " << std::string(beg, header.end()) << std::endl;
+            log << "unparse: " << std::string(beg, header.cend()) << std::endl;
             return {context, nullptr};
         }
 
-        if (it == header.end())
+        if (it == header.cend())
             break;
 
         if (*it == ',' || *it == '|') {
@@ -225,24 +240,24 @@ std::pair<std::vector<Tree*>, Tree*> parseHeader(const std::string& header, std:
             context.push_back(res);
 
             if (*it++ == '|') {
-                if (it != header.end() && *it == '-') {
+                if (it != header.cend() && *it == '-') {
                     ++it;
                 } else {
-                    log << "unparse: " << std::string(beg, header.end()) << std::endl;
+                    log << "unparse: " << std::string(beg, header.cend()) << std::endl;
                     return {context, nullptr};
                 }
             }
         } else {
-            log << "unparse: " << std::string(beg, header.end()) << std::endl;
+            log << "unparse: " << std::string(beg, header.cend()) << std::endl;
             return {context, nullptr};
         }
     }
 
-    if (it == header.end()) {
+    if (it == header.cend()) {
         res->setExpr(std::string(beg, it));
         return {context, res};
     } else
-        log << "unparse: " << std::string(beg, header.end()) << std::endl;
+        log << "unparse: " << std::string(beg, header.cend()) << std::endl;
 
     return {context, nullptr};
 }

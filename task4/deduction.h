@@ -22,6 +22,9 @@ public:
     const std::string kPathResources = "resources";
     const std::string kPathAxioms = kPathResources + "/axioms/base_axioms";
     const std::string kPathFormalAxioms = kPathResources + "/axioms/base_formal_axioms";
+    const std::string kPathAbcBac = kPathResources + "/axioms/abc_bac";
+    const std::string kPathAandBC_abc = kPathResources + "/axioms/AandBC_abc";
+    const std::string kPathAbc_AandBC = kPathResources + "/axioms/abc_AandBC";
 
 //private:
     void init();
@@ -29,6 +32,8 @@ public:
     void readAxioms();
 
     void readFormalAxioms();
+
+    static bool isFromContext(Tree* expr, const std::vector<Tree*>& context);
 
     static boost::optional<std::pair<int, int>> isMP(Tree* expr, const std::vector<Tree*>& context);
 
@@ -68,6 +73,9 @@ private:
     std::ifstream in_;
     std::vector<Tree*> axioms_;
     std::vector<Tree*> formal_axioms_;
+    std::string abc_bac;
+    std::string AandBC_abc;
+    std::string abc_AandBC;
 };
 
 #endif // DEDUCTION_H

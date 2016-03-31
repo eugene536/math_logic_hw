@@ -34,13 +34,21 @@ void Deduction::doDeduction(const std::string &out_path)
         alpha = context.back();
         context.pop_back();
 
+        for (size_t i  = 0; i < context.size(); ++i)
+            out << context[i] << (i == context.size() - 1 ? " " : ",");
+        out << "|-" << alpha << "->" << result << endl;
+
         unordered_multiset<string> unused;
         getFreeVars(alpha, vars, unused);
+
+    } else {
+        out << "|-" << result << endl;
     }
 
 #define notNeedWork() \
     if (!needWork) { \
-        out << alpha << endl; \
+        out << expr << endl; \
+        cur_l++; \
         continue;\
     }
 
@@ -53,26 +61,26 @@ void Deduction::doDeduction(const std::string &out_path)
         assert(expr);
 
         if (alpha != nullptr && *expr == *alpha) {
-            notNeedWork();
             out << alpha << "->" << alpha << "->" << alpha << endl;
 
             out << "(" << alpha << "->" << alpha << "->" << alpha << ")->"
                 << "(" << alpha << "->((" << alpha << "->" << alpha << ")->" << alpha << "))->"
                 << "(" << alpha << "->" << alpha << ")" << endl;
 
+            out << "(" << alpha << "->((" << alpha << "->" << alpha << ")->" << alpha << "))" << endl;
+
             out << "(" << alpha << "->((" << alpha << "->" << alpha << ")->" << alpha << "))->"
                 << "(" << alpha << "->" << alpha << ")" << endl;
-
-            out << "(" << alpha << "->((" << alpha << "->" << alpha << ")->" << alpha << "))" << endl;
 
             out << "(" << alpha << "->" << alpha << ")" << endl;
         } else if (isAxiom(expr) ||
                    isForallAxiom(expr) ||
-                   isExistAxiom(expr) ||
-                   isFormalAxiom(expr)) {
+                   isExistAxiom(expr)  ||
+                   isFormalAxiom(expr) ||
+                   isFromContext(expr, context)) {
             notNeedWork();
-            out << expr << "->" << alpha << "->" << expr << endl;
             out << expr << endl;
+            out << expr << "->" << alpha << "->" << expr << endl;
             out << alpha << "->" << expr << endl;
         } else if (isMP(expr, parsed)) {
             notNeedWork();
@@ -87,9 +95,16 @@ void Deduction::doDeduction(const std::string &out_path)
 
             out << "(" << alpha << "->" << expr << ")" << endl;
         } else if (isForallRule(expr, parsed) && vars.count(expr->children_[1]->children_[0]->tag_) == 0) {
+            notNeedWork();
 //            int i = *isForallRule(expr, parsed);
 
 
+        } else if (isExistRule(expr, parsed) && vars.count(expr->children_[0]->children_[0]->tag_) == 0) {
+            notNeedWork();
+
+        } else {
+            log_ << "something go wrong on line: " << cur_l << endl;
+            exit(EXIT_FAILURE);
         }
 
         cur_l++;
@@ -102,6 +117,18 @@ void Deduction::init()
 {
     readAxioms();
     readFormalAxioms();
+
+    std::stringstream ss;
+    ss << std::ifstream(kPathAbcBac).rdbuf();
+    abc_bac = ss.str();
+
+    ss.str("");
+    ss << std::ifstream(kPathAandBC_abc).rdbuf();
+    AandBC_abc = ss.str();
+
+    ss.str("");
+    ss << std::ifstream(kPathAbc_AandBC).rdbuf();
+    abc_AandBC = ss.str();
 }
 
 void Deduction::readAxioms()
@@ -132,6 +159,14 @@ void Deduction::readFormalAxioms()
     }
 
     std::cerr << "read formal axioms" << std::endl;
+}
+
+bool Deduction::isFromContext(Tree *expr, const std::vector<Tree *> &context)
+{
+    for (Tree* t: context)
+        if (*expr == *t)
+            return true;
+    return false;
 }
 
 boost::optional<std::pair<int, int>> Deduction::isMP(Tree* expr, const std::vector<Tree *> &context)
@@ -351,6 +386,8 @@ bool Deduction::isExistAxiom(Tree *expr)
             return isFreeForSubstitution(orig, with_theta, var, bounded);
         }
     }
+
+    return false;
 }
 
 bool Deduction::isFreeForSubstitution(Tree *orig, Tree *expr, const std::string &var, std::unordered_multiset<std::string> &bounded)

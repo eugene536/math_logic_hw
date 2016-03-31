@@ -7,6 +7,6 @@
 #include "tree.h"
 
 Tree* parse(const std::string& expression, std::ostream& log = std::cerr);
-std::pair<std::vector<Tree*>, Tree*> parseHeader(const std::string& header, std::ostream& log);
+std::pair<std::vector<Tree*>, Tree*> parseHeader(std::string header, std::ostream& log);
 
 #endif // PARSER_H
