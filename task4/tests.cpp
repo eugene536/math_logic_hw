@@ -148,7 +148,8 @@ TEST(Deduction, isMP) {
                           parse("A->A->A"),
                           parse("P(b)"),
                           parse("(a=b->0'''''=0)->@x?yP(x, y)"),
-                          parse("?aP(a)->(A->A->A)->P(b)")};
+                          parse("?aP(a)->(A->A->A)->P(b)"),
+                          parse("A")};
 
     EXPECT_TRUE(deduction.isMP(parse("@x?yP(x, y)"), context));
     EXPECT_TRUE(deduction.isMP(parse("P(b)"), context));
@@ -171,7 +172,10 @@ TEST(Deduction, isForallRule) {
                           parse("P(b)"),
                           parse("(a=b->0'''''=0)->@x?yP(x, y)"),
                           parse("(@a(a = b) & ?a(a * b = c'') | P(x, y))->(A->A->A)"),
-                          parse("?aP(a)->(A->A->A)->P(b)")};
+                          parse("?aP(a)->(A->A->A)->P(b)"),
+                          parse("(@x((@x(P(x)))&(Q(x))))&(((A)&(B))->(A))->(P(x))")};
+
+    EXPECT_TRUE(deduction.isForallRule(parse("(@x((@x(P(x)))&(Q(x))))&(((A)&(B))->(A))->(@x(P(x)))"), context));
 
     EXPECT_TRUE(deduction.isForallRule(parse("A->@x(A->A)"), context));
     EXPECT_TRUE(deduction.isForallRule(parse("(A->A->A)->@bP(b)"), context));

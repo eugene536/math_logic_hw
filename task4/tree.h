@@ -31,7 +31,7 @@ public:
 
     bool operator!=(const Tree& oth) const;
 
-    void setExpr(const std::string &expr);
+    void calculateExpr();
 
 private:
     void init();

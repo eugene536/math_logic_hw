@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cctype>
 #include "tree.h"
 
 namespace {
@@ -68,8 +69,6 @@ void Tree::print(std::ostream& out, int depth) const {
 
 bool Tree::operator==(const Tree &oth) const
 {
-    if (hash_ != oth.hash_)
-        return false;
     return equals(this, &oth);
 }
 
@@ -83,6 +82,7 @@ void Tree::init()
     hash_ = 0;
     len_ = 0;
     calculateHash();
+    calculateExpr();
 }
 
 void Tree::calculateHash()
@@ -118,7 +118,42 @@ bool Tree::equals(const Tree *l, const Tree *r)
     return true;
 }
 
-void Tree::setExpr(const std::string &expr)
+void Tree::calculateExpr()
 {
-    expr_ = expr;
+    if (children_.empty()) {
+        expr_ = tag_;
+        return;
+    } else if (std::isalpha(tag_[0])) {
+        expr_ = tag_;
+        if (children_.size()) {
+            expr_ += "(" + children_[0]->expr_;
+            for (size_t i = 1; i < children_.size(); ++i)
+                expr_ += "," + children_[i]->expr_;
+            expr_ += ")";
+        }
+        return;
+    }
+
+    assert(!tag_.empty());
+    switch (tag_[0]) {
+        case '\'':
+            expr_ = "(" + children_[0]->expr_ + ")'";
+            break;
+        case '?':
+            expr_ = "?" + children_[0]->expr_ +
+                    "(" + children_[1]->expr_ + ")";
+            break;
+        case '@':
+            expr_ = "@" + children_[0]->expr_ +
+                    "(" + children_[1]->expr_ + ")";
+            break;
+        case '!':
+            expr_ = "!(" + children_[0]->expr_ + ")";
+            break;
+        default:
+            expr_ = "(" + children_[0]->expr_ + ")" +
+                    tag_ +
+                    "(" + children_[1]->expr_ + ")";
+            break;
+    }
 }

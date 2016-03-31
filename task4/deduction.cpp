@@ -8,6 +8,7 @@
 Deduction::Deduction(const std::string &path)
     : in_(kPathResources + "/" + path)
 {
+    std::ios_base::sync_with_stdio(false);
     init();
 }
 
@@ -25,7 +26,7 @@ void Deduction::doDeduction(const std::string &out_path)
     std::tie(context, result) = parseHeader(header, log_);
     assert(result);
 
-    ostringstream out;
+    ofstream out(out_path);
 
     bool needWork = context.size() != 0;
     Tree* alpha = nullptr;
@@ -36,18 +37,18 @@ void Deduction::doDeduction(const std::string &out_path)
 
         for (size_t i  = 0; i < context.size(); ++i)
             out << context[i] << (i == context.size() - 1 ? " " : ",");
-        out << "|-" << alpha << "->" << result << endl;
+        out << "|-" << alpha << "->" << result << "\n";
 
         unordered_multiset<string> unused;
         getFreeVars(alpha, vars, unused);
 
     } else {
-        out << "|-" << result << endl;
+        out << "|-" << result << "\n";
     }
 
 #define notNeedWork() \
     if (!needWork) { \
-        out << expr << endl; \
+        out << expr << "\n"; \
         cur_l++; \
         continue;\
     }
@@ -55,62 +56,89 @@ void Deduction::doDeduction(const std::string &out_path)
     string expr_s;
     size_t cur_l = 2;
     vector<Tree*> parsed;
+    Tree* expr;
     while (getline(in_, expr_s)) {
-        Tree* expr = parse(expr_s);
+        expr = parse(expr_s);
         parsed.push_back(expr);
         assert(expr);
 
         if (alpha != nullptr && *expr == *alpha) {
-            out << alpha << "->" << alpha << "->" << alpha << endl;
+            out << alpha << "->" << alpha << "->" << alpha << "\n";
 
             out << "(" << alpha << "->" << alpha << "->" << alpha << ")->"
                 << "(" << alpha << "->((" << alpha << "->" << alpha << ")->" << alpha << "))->"
-                << "(" << alpha << "->" << alpha << ")" << endl;
+                << "(" << alpha << "->" << alpha << ")" << "\n";
 
-            out << "(" << alpha << "->((" << alpha << "->" << alpha << ")->" << alpha << "))" << endl;
+            out << "(" << alpha << "->((" << alpha << "->" << alpha << ")->" << alpha << "))" << "\n";
 
             out << "(" << alpha << "->((" << alpha << "->" << alpha << ")->" << alpha << "))->"
-                << "(" << alpha << "->" << alpha << ")" << endl;
+                << "(" << alpha << "->" << alpha << ")" << "\n";
 
-            out << "(" << alpha << "->" << alpha << ")" << endl;
+            out << "(" << alpha << "->" << alpha << ")" << "\n";
         } else if (isAxiom(expr) ||
                    isForallAxiom(expr) ||
                    isExistAxiom(expr)  ||
                    isFormalAxiom(expr) ||
                    isFromContext(expr, context)) {
             notNeedWork();
-            out << expr << endl;
-            out << expr << "->" << alpha << "->" << expr << endl;
-            out << alpha << "->" << expr << endl;
+            out << expr << "\n";
+            out << expr << "->" << alpha << "->" << expr << "\n";
+            out << alpha << "->" << expr << "\n";
         } else if (isMP(expr, parsed)) {
             notNeedWork();
             int i, j;
             std::tie(i, j) = *isMP(expr, parsed);
             out << "(" << alpha << "->" << parsed[i] << ")->"
                    "(" << alpha << "->" << parsed[j] << ")->"
-                   "(" << alpha << "->" << expr << ")" << endl;
+                   "(" << alpha << "->" << expr << ")" << "\n";
 
             out << "(" << alpha << "->" << parsed[j] << ")->"
-                   "(" << alpha << "->" << expr << ")" << endl;
+                   "(" << alpha << "->" << expr << ")" << "\n";
 
-            out << "(" << alpha << "->" << expr << ")" << endl;
+            out << "(" << alpha << "->" << expr << ")" << "\n";
         } else if (isForallRule(expr, parsed) && vars.count(expr->children_[1]->children_[0]->tag_) == 0) {
             notNeedWork();
-//            int i = *isForallRule(expr, parsed);
+            int i = *isForallRule(expr, parsed);
+            // expr     : A->@xB
+            // parsed[i]: A->B
+            // alpha    : a
+
+            Tree* xB = expr->children_[1];
+            Tree* A = parsed[i]->children_[0];
+            Tree* B = parsed[i]->children_[1];
 
 
+            printLemma(out, abc_AandBC, alpha, A, B);        // (a → A → B) → (a & A → B)
+            out << alpha << "&" << A << "->" << B << "\n";   // a & A → B
+            out << alpha << "&" << A << "->" << xB << "\n";  // a & A → ∀x.B
+            printLemma(out, AandBC_abc, alpha, A, xB);       // (a & A → ∀x.B) → (a → A → ∀x.B)
+            out << alpha << "->" << A << "->" << xB << "\n"; // a → A → ∀x.B
         } else if (isExistRule(expr, parsed) && vars.count(expr->children_[0]->children_[0]->tag_) == 0) {
             notNeedWork();
+            int i = *isExistRule(expr, parsed);
+            // expr     : ?x(A)->B
+            // parsed[i]: A->B
+            // alpha    : a
 
+            Tree* xA = expr->children_[0];
+            Tree* A = parsed[i]->children_[0];
+            Tree* B = parsed[i]->children_[1];
+
+            printLemma(out, abc_bac, alpha, A, B);                      // (a → A → B) → (A → a → B)
+            out << A << "->" << alpha << "->" << B << "\n";             // A → a → B
+            out << xA << "->" << alpha << "->" << B << "\n";            //  ∃x.A → a → B (это же правило вывода)
+            printLemma(out, abc_bac, xA, alpha, B);                     // (∃x.A → a → B) → (a → ∃x.A → B)
+            out << alpha << "->" << xA << "->" << B << "\n";            // a → ∃x.A → B
         } else {
-            log_ << "something go wrong on line: " << cur_l << endl;
+            std::cerr << "fail: " << cur_l << std::endl;
+            log_ << "something go wrong on line: " << cur_l << "\n";
+            log_.flush();
             exit(EXIT_FAILURE);
         }
 
         cur_l++;
     }
-
-    ofstream(out_path) << out.str();
+    assert(*expr == *result);
 }
 
 void Deduction::init()
@@ -171,12 +199,12 @@ bool Deduction::isFromContext(Tree *expr, const std::vector<Tree *> &context)
 
 boost::optional<std::pair<int, int>> Deduction::isMP(Tree* expr, const std::vector<Tree *> &context)
 {
-    for (size_t i = 0; i < context.size(); ++i) {
+    for (size_t i = 0; i < context.size() - 1; ++i) {
         Tree* c = context[i];
 
         if (c->tag_ == "->" && *c->children_[1] == *expr) {
             Tree* lc = c->children_[0];
-            for (size_t j = 0; j < i; ++j) {
+            for (size_t j = 0; j < context.size() - 1; ++j) {
                 if (*context[j] == *lc)
                     return std::pair<int, int>(j, i);
             }
@@ -458,5 +486,19 @@ void Deduction::getFreeVars(Tree *expr, std::unordered_set<std::string> &vars,
 
     if (expr->tag_ == "@" || expr->tag_ == "?")
         bounded.erase(bounded.find(expr->children_[0]->tag_));
+}
+
+void Deduction::printLemma(std::ostream &out, const std::string &lemma, Tree *A, Tree *B, Tree *C)
+{
+    for (char c: lemma) {
+        if (c == 'A')
+            out << A;
+        else if (c == 'B')
+            out << B;
+        else if (c == 'C')
+            out << C;
+        else
+            out << c;
+    }
 }
 

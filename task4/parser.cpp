@@ -195,7 +195,6 @@ Tree* parse(const std::string& expression, std::ostream& log) {
         log << "unparse: " << std::string(it, expression.cend()) << std::endl;
 
     if (r && it == expression.cend()) {
-        res->setExpr(expression);
         return res;
     }
 
@@ -236,7 +235,6 @@ std::pair<std::vector<Tree*>, Tree*> parseHeader(std::string header, std::ostrea
             break;
 
         if (*it == ',' || *it == '|') {
-            res->setExpr(std::string(beg, it));
             context.push_back(res);
 
             if (*it++ == '|') {
@@ -254,7 +252,6 @@ std::pair<std::vector<Tree*>, Tree*> parseHeader(std::string header, std::ostrea
     }
 
     if (it == header.cend()) {
-        res->setExpr(std::string(beg, it));
         return {context, res};
     } else
         log << "unparse: " << std::string(beg, header.cend()) << std::endl;

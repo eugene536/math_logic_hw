@@ -7,6 +7,7 @@
 using namespace std;
 
 int main() {
+    ios_base::sync_with_stdio(false);
     std::cerr << "task4" << std::endl;
 
     Deduction deduction("in");

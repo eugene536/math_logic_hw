@@ -69,6 +69,9 @@ public:
     static void getFreeVars(Tree* expr, std::unordered_set<std::string> &vars,
                             std::unordered_multiset<std::string>& bounded);
 
+    static void printLemma(std::ostream &out, const std::string& lemma,
+                           Tree* A, Tree* B, Tree* C);
+
 private:
     std::ifstream in_;
     std::vector<Tree*> axioms_;
