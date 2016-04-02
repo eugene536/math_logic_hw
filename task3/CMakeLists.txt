@@ -17,5 +17,5 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
   
 endif()
 
-target_link_libraries(main -lgmp -lgmpxx -lpthread)
+target_link_libraries(main)
 
