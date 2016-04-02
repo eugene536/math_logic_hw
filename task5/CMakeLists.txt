@@ -9,12 +9,11 @@ SET(SOURCE_FILES tree.h
                  parser.h
                  parser.cpp
                  kripke.h
-                 kripke.cpp)
+                 kripke.cpp
+                 main.cpp)
 
 
 FILE(COPY ${CMAKE_HOME_DIRECTORY}/resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
-SET(SOURCE_FILES ${SOURCE_FILES} main.cpp)
 
 ADD_EXECUTABLE(Task ${SOURCE_FILES})
 
